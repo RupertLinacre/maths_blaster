@@ -9,7 +9,7 @@ const CANVAS_HEIGHT = canvas.height;
 const ENEMY_WIDTH = 80;
 const ENEMY_HEIGHT = 80;
 const BASE_ENEMY_SPEED = 0.2; // Base speed that will increase with level
-const BASE_ENEMY_SPAWN_INTERVAL = 2500; // Base spawn interval that will decrease with level
+const BASE_ENEMY_SPAWN_INTERVAL = 7500; // Base spawn interval that will decrease with level
 const INCORRECT_ANSWER_SPEED_PENALTY = 0.02; // Speed increase penalty for incorrect answers
 
 const SHOT_SPEED = 5; // pixels per frame
@@ -487,7 +487,13 @@ function startGame() {
     enemySpawnInterval = BASE_ENEMY_SPAWN_INTERVAL;
     gunProblem = generateGunProblem();
     lastEnemySpawnTime = 0;
+
+    spawnEnemy();
+
+
     requestAnimationFrame(gameLoop);
+
+
 }
 
 // Start the game and focus the input box
