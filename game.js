@@ -1,4 +1,3 @@
-
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 const answerInput = document.getElementById('answerInput');
@@ -441,6 +440,10 @@ answerInput.addEventListener('keydown', (event) => {
                 return true;
             });
 
+            if (enemyDestroyed && enemies.length === 0) {
+                spawnEnemy();
+            }
+
             if (!enemyDestroyed && input) {
                 applyIncorrectAnswerPenalty();
                 answerInput.classList.add('shake');
@@ -464,6 +467,8 @@ function startGame() {
     gunProblem = generateGunProblem();
     lastEnemySpawnTime = 0;
 
+    spawnEnemy();
+    spawnEnemy();
     spawnEnemy();
     requestAnimationFrame(gameLoop);
 }
