@@ -37,27 +37,51 @@ let lastEnemySpawnTime = 0;
 
 // Generate a simple math problem for enemies (within 10)
 function generateEnemyProblem() {
-    const a = Math.floor(Math.random() * 10) + 1;
-    const b = Math.floor(Math.random() * 10) + 1;
-    if (Math.random() < 0.5) {
-        return { problem: `${a} + ${b}`, answer: a + b };
+    // Determine if this will be an addition or multiplication problem
+    const isProblemMultiplication = Math.random() < 0.5;
+
+    if (isProblemMultiplication) {
+        // Multiplication problem (up to 12x12)
+        const a = Math.floor(Math.random() * 12) + 1;
+        const b = Math.floor(Math.random() * 12) + 1;
+        return {
+            text: `${a} × ${b}`,
+            answer: a * b
+        };
     } else {
-        const max = Math.max(a, b);
-        const min = Math.min(a, b);
-        return { problem: `${max} - ${min}`, answer: max - min };
+        // Original addition problem logic
+        const maxNum = Math.min(10 + level * 5, 100);
+        const a = Math.floor(Math.random() * maxNum);
+        const b = Math.floor(Math.random() * maxNum);
+        return {
+            text: `${a} + ${b}`,
+            answer: a + b
+        };
     }
 }
 
 // Generate a harder math problem for the gun (within 20)
 function generateGunProblem() {
-    const a = Math.floor(Math.random() * 20) + 1;
-    const b = Math.floor(Math.random() * 20) + 1;
-    if (Math.random() < 0.5) {
-        return { problem: `${a} + ${b}`, answer: a + b };
+    // Determine if this will be an addition or multiplication problem
+    const isProblemMultiplication = Math.random() < 0.5;
+
+    if (isProblemMultiplication) {
+        // Multiplication problem (up to 12x12)
+        const a = Math.floor(Math.random() * 12) + 1;
+        const b = Math.floor(Math.random() * 12) + 1;
+        return {
+            text: `${a} × ${b}`,
+            answer: a * b
+        };
     } else {
-        const max = Math.max(a, b);
-        const min = Math.min(a, b);
-        return { problem: `${max} - ${min}`, answer: max - min };
+        // Original addition problem logic
+        const maxNum = Math.min(10 + level * 3, 50);
+        const a = Math.floor(Math.random() * maxNum);
+        const b = Math.floor(Math.random() * maxNum);
+        return {
+            text: `${a} + ${b}`,
+            answer: a + b
+        };
     }
 }
 
@@ -113,9 +137,9 @@ function showLevelUpEffect() {
 function spawnEnemy() {
     const x = Math.random() * (CANVAS_WIDTH - ENEMY_WIDTH);
     const y = 0;
-    const { problem, answer } = generateEnemyProblem();
+    const { text, answer } = generateEnemyProblem();
     const color = `hsl(${Math.random() * 360}, 70%, 50%)`; // Random vibrant color
-    enemies.push({ x, y, problem, answer, color });
+    enemies.push({ x, y, text, answer, color });
 }
 
 // Fire six shots from the gun in different directions (including horizontal)
@@ -257,7 +281,7 @@ function render() {
         ctx.font = 'bold 20px Arial';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(enemy.problem, enemy.x + ENEMY_WIDTH / 2, enemy.y + ENEMY_HEIGHT / 2);
+        ctx.fillText(enemy.text, enemy.x + ENEMY_WIDTH / 2, enemy.y + ENEMY_HEIGHT / 2);
     });
 
     // Draw gun
@@ -287,7 +311,7 @@ function render() {
     ctx.font = 'bold 20px Arial';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(gunProblem.problem, GUN_X + GUN_WIDTH / 2, GUN_Y + GUN_HEIGHT / 2);
+    ctx.fillText(gunProblem.text, GUN_X + GUN_WIDTH / 2, GUN_Y + GUN_HEIGHT / 2);
 
     // Draw shots with trail effect
     shots.forEach(shot => {
@@ -490,10 +514,7 @@ function startGame() {
 
     spawnEnemy();
 
-
     requestAnimationFrame(gameLoop);
-
-
 }
 
 // Start the game and focus the input box
