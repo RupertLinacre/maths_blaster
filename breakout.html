@@ -4,7 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Math Breakout Game</title>
+    <title>Math Breakout Game - Optimized</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.55.2/phaser.min.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -20,669 +21,566 @@
         }
 
         #game-container {
-            position: relative;
-            width: 600px;
-            height: 500px;
             margin: 0 auto;
-            background-color: #fff;
-            border: 2px solid #333;
-            overflow: hidden;
-        }
-
-        #paddle {
-            position: absolute;
-            width: 80px;
-            height: 20px;
-            background-color: #3498db;
-            bottom: 10px;
-            left: 250px;
-            border-radius: 0;
-            border: 1px solid #2980b9;
-            clip-path: polygon(0% 0%, 100% 0%, 80% 100%, 20% 100%);
-        }
-
-        .block {
-            position: absolute;
-            width: 60px;
-            height: 30px;
-            background-color: #2ecc71;
-            /* Green for regular/easy blocks */
-            border-radius: 3px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: bold;
-            font-size: 16px;
-            border: 1px solid #27ae60;
-        }
-
-        .block.hard {
-            background-color: #e74c3c;
-            /* Red for hard problem blocks */
-            border: 1px solid #c0392b;
-        }
-
-        .ball {
-            position: absolute;
-            width: 18px;
-            height: 18px;
-            background-color: #2ecc71;
-            border-radius: 50%;
-            box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.3);
-        }
-
-        #answer-input {
-            width: 100px;
-            padding: 8px;
-            font-size: 16px;
-            margin-top: 15px;
-            text-align: center;
-            border: 2px solid #3498db;
-            border-radius: 5px;
-        }
-
-        #score-container {
-            margin-top: 10px;
-            font-size: 18px;
-            font-weight: bold;
-        }
-
-        #message {
-            margin-top: 10px;
-            font-size: 18px;
-            height: 25px;
-            color: #27ae60;
-        }
-
-        #game-over {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background-color: rgba(0, 0, 0, 0.8);
-            color: white;
-            padding: 20px;
-            border-radius: 10px;
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            width: 70%;
-        }
-
-        button {
-            background-color: #3498db;
-            border: none;
-            color: white;
-            padding: 10px 20px;
-            font-size: 16px;
-            cursor: pointer;
-            border-radius: 5px;
-            margin-top: 15px;
-        }
-
-        button:hover {
-            background-color: #2980b9;
+            width: 650px;
         }
     </style>
 </head>
 
 <body>
     <h1>Math Breakout Game</h1>
-    <p>Use left and right arrow keys to move the shooter. Type the answer to a math problem and hit Enter to shoot at
-        it.</p>
-    <p><span style="color: #2ecc71;">Green blocks</span> have easy problems (single-digit addition/subtraction). <span
-            style="color: #e74c3c;">Red blocks</span> have harder problems (2-digit operations or multiplication) worth
-        more points!</p>
-    <p>Special feature: Answering a red block correctly shoots three balls in different directions!</p>
-    <div id="game-container">
-        <div id="paddle"></div>
-        <div id="game-over">
-            <h2>Game Over!</h2>
-            <p>Your score: <span id="final-score">0</span></p>
-            <button id="restart-button">Play Again</button>
-        </div>
-    </div>
-    <div>
-        <input type="number" id="answer-input" placeholder="Answer">
-    </div>
-    <div id="message"></div>
-    <div id="score-container">Score: <span id="score">0</span></div>
+    <p>Use LEFT/RIGHT to move. Type answers and hit ENTER to shoot at blocks.</p>
+    <p><span style="color: #2ecc71;">Green blocks</span>: easy problems. <span style="color: #e74c3c;">Red
+            blocks</span>: harder problems (worth more points!)</p>
+    <div id="game-container"></div>
 
     <script>
-        // Game controller
-        const game = {
-            // Game state
-            columns: 8,
-            rows: 5,
-            grid: [],
-            blocks: [],
-            balls: [],
-            score: 0,
-            gameInProgress: true,
-            paddleX: 250,
-            paddleSpeed: 15,
+        class MathGame extends Phaser.Scene {
+            constructor() {
+                super('Game');
+                this.score = 0;
+                this.gameInProgress = true;
+            }
 
-            // DOM elements
-            container: document.getElementById('game-container'),
-            paddle: document.getElementById('paddle'),
-            answerInput: document.getElementById('answer-input'),
-            scoreElement: document.getElementById('score'),
-            messageElement: document.getElementById('message'),
-            gameOverElement: document.getElementById('game-over'),
-            finalScoreElement: document.getElementById('final-score'),
+            create() {
+                // Setup game
+                this.blocks = this.physics.add.staticGroup();
+                this.balls = this.physics.add.group();
 
-            // Initialize the game
-            init: function () {
-                // Initialize grid
-                this.grid = Array(this.columns).fill().map(() => Array(this.rows).fill(null));
+                // Create paddle (shooter)
+                this.paddle = this.physics.add.image(300, 480, 'paddle').setImmovable(true);
 
-                // Set up event listeners
-                document.addEventListener('keydown', this.handleKeyPress.bind(this));
-                this.answerInput.addEventListener('keydown', this.handleAnswer.bind(this));
-                document.getElementById('restart-button').addEventListener('click', this.restart.bind(this));
-
-                // Create initial blocks
+                // Create blocks grid (8x5)
                 this.createBlocks();
 
-                // Focus on input
-                this.answerInput.focus();
+                // Input handling
+                this.cursors = this.input.keyboard.createCursorKeys();
+                this.input.keyboard.on('keydown-ENTER', this.checkAnswer, this);
 
-                // Start game loop
-                this.gameLoop();
-            },
+                // UI elements within Phaser canvas
+                this.answerText = this.add.text(300, 530, '', {
+                    fontSize: '24px',
+                    backgroundColor: '#fff',
+                    color: '#333',
+                    fixedWidth: 100,
+                    padding: { x: 10, y: 5 },
+                    align: 'center'
+                }).setOrigin(0.5);
 
-            createBlocks: function () {
-                // Constants for block layout
-                const blockWidth = 60;
-                const blockHeight = 30;
-                const gameWidth = this.container.offsetWidth;
-                const totalBlocksWidth = blockWidth * this.columns;
-                const horizontalMargin = (gameWidth - totalBlocksWidth) / 2;
-                const horizontalGap = 3;
-                const verticalSpacing = 3;
+                // Add cursor effect and input box styling
+                this.answerText.setPadding(10);
+                this.answerText.setBackgroundColor('#ffffff');
 
-                for (let col = 0; col < this.columns; col++) {
-                    for (let row = 0; row < this.rows; row++) {
-                        // Create block data
-                        const block = {
-                            column: col,
-                            row: row,
-                            x: horizontalMargin + (col * (blockWidth + horizontalGap)),
-                            y: (row + 1) * verticalSpacing + row * blockHeight + 30,
-                            width: blockWidth,
-                            height: blockHeight,
-                            hasMathProblem: (row === this.rows - 1), // Bottom row has math problems
-                            element: null
-                        };
+                // Create input box border
+                this.inputBorder = this.add.rectangle(300, 530, 120, 44, 0x3498db, 0);
+                this.inputBorder.setStrokeStyle(2, 0x3498db);
 
-                        // Create and assign a math problem if needed
-                        if (block.hasMathProblem) {
-                            // Determine difficulty - 25% chance of a hard problem in the bottom row
-                            const difficulty = (Math.random() < 0.25) ? 'hard' : 'easy';
-                            block.mathProblem = this.createMathProblem(difficulty);
-                        }
+                // Create blinking cursor
+                this.cursor = this.add.text(
+                    this.answerText.x + (this.answerText.text.length * 7),
+                    this.answerText.y,
+                    '|',
+                    { fontSize: '24px', color: '#333' }
+                ).setOrigin(0.5);
 
-                        // Create DOM element
-                        const element = document.createElement('div');
-                        element.className = 'block';
-                        element.style.left = block.x + 'px';
-                        element.style.top = block.y + 'px';
+                // Blink cursor
+                this.time.addEvent({
+                    delay: 500,
+                    callback: () => { this.cursor.visible = !this.cursor.visible; },
+                    loop: true
+                });
 
-                        if (block.hasMathProblem) {
-                            element.textContent = block.mathProblem.expression;
+                // Set focus indicator (light blue glow)
+                this.answerText.on('pointerover', () => {
+                    this.inputBorder.setStrokeStyle(3, 0x3498db);
+                });
 
-                            // Add 'hard' class for styling if it's a hard problem
-                            if (block.mathProblem.difficulty === 'hard') {
-                                element.classList.add('hard');
-                            }
-                        }
+                this.answerText.on('pointerout', () => {
+                    this.inputBorder.setStrokeStyle(2, 0x3498db);
+                });
 
-                        // Add to DOM
-                        this.container.appendChild(element);
+                // Make clickable
+                this.answerText.setInteractive();
 
-                        // Store element reference
-                        block.element = element;
+                this.scoreText = this.add.text(20, 530, 'Score: 0', { fontSize: '24px' });
+                this.messageText = this.add.text(300, 560, '', { fontSize: '24px' }).setOrigin(0.5);
 
-                        // Store in grid and blocks array
-                        this.grid[col][row] = block;
-                        this.blocks.push(block);
+                // Setup collisions
+                this.physics.add.collider(this.balls, this.blocks, this.hitBlock, null, this);
+
+                // Input handling - direct key input for answer
+                this.input.keyboard.on('keydown', e => {
+                    if (e.keyCode >= 48 && e.keyCode <= 57 || e.keyCode >= 96 && e.keyCode <= 105) {
+                        // Numbers
+                        this.answerText.text += e.key;
+                        // Update cursor position
+                        this.updateCursorPosition();
+                    } else if (e.keyCode === 8) {
+                        // Backspace
+                        this.answerText.text = this.answerText.text.slice(0, -1);
+                        // Update cursor position
+                        this.updateCursorPosition();
+                    }
+                });
+            }
+
+            preload() {
+                // Generate graphics on the fly
+                this.generateTextures();
+            }
+
+            generateTextures() {
+                // Create paddle graphic
+                let g = this.add.graphics();
+                g.fillStyle(0x3498db);
+                g.beginPath();
+                g.moveTo(0, 0);
+                g.lineTo(80, 0);
+                g.lineTo(64, 20);
+                g.lineTo(16, 20);
+                g.closePath();
+                g.fillPath();
+                g.generateTexture('paddle', 80, 20);
+                g.clear();
+
+                // Create ball
+                g.fillStyle(0x2ecc71);
+                g.fillCircle(9, 9, 9);
+                g.generateTexture('ball', 18, 18);
+                g.clear();
+
+                // Create blocks - make them wider (70px instead of 60px)
+                g.fillStyle(0x2ecc71);
+                g.fillRect(0, 0, 70, 30);
+                g.generateTexture('blockEasy', 70, 30);
+                g.clear();
+
+                g.fillStyle(0xe74c3c);
+                g.fillRect(0, 0, 70, 30);
+                g.generateTexture('blockHard', 70, 30);
+                g.destroy();
+            }
+
+            // Helper method to get column from x position
+            getBlockColumn(x) {
+                return Math.floor((x - 65) / 74);
+            }
+
+            createBlocks() {
+                const blockData = [];
+                const blockWidth = 70; // Wider blocks
+                const spacing = 74; // Adjusted spacing
+
+                // Bottom row has math problems - Center the grid better with offset
+                const startX = 65; // Increased left margin
+
+                for (let col = 0; col < 8; col++) {
+                    for (let row = 0; row < 5; row++) {
+                        blockData.push({
+                            x: startX + col * spacing,
+                            y: 50 + row * 40,
+                            problem: row === 4 ? this.createMathProblem(Math.random() < 0.25 ? 'hard' : 'easy') : null
+                        });
                     }
                 }
-            },
 
-            createMathProblem: function (difficulty = 'easy') {
+                blockData.forEach(data => {
+                    const type = data.problem?.difficulty === 'hard' ? 'blockHard' : 'blockEasy';
+                    const block = this.blocks.create(data.x, data.y, type);
+
+                    if (data.problem) {
+                        block.setData('problem', data.problem);
+                        this.add.text(data.x, data.y, data.problem.expression, {
+                            fontSize: '16px',
+                            color: '#fff',
+                            fontStyle: 'bold'
+                        }).setOrigin(0.5).setData('blockRef', block);
+                    }
+                });
+            }
+
+            createMathProblem(difficulty) {
                 if (difficulty === 'easy') {
-                    // Create a simple math problem suitable for a 7-year-old
                     if (Math.random() < 0.5) {
                         // Addition
-                        const num1 = Math.floor(Math.random() * 10) + 1; // 1-10
-                        const num2 = Math.floor(Math.random() * 10) + 1; // 1-10
-                        return {
-                            expression: `${num1} + ${num2}`,
-                            answer: num1 + num2,
-                            difficulty: 'easy'
-                        };
+                        const a = Math.floor(Math.random() * 10) + 1;
+                        const b = Math.floor(Math.random() * 10) + 1;
+                        return { expression: `${a} + ${b}`, answer: a + b, difficulty };
                     } else {
-                        // Subtraction - ensure result is positive
-                        const num2 = Math.floor(Math.random() * 10) + 1; // 1-10
-                        const num1 = num2 + Math.floor(Math.random() * 10); // Ensure num1 > num2
-                        return {
-                            expression: `${num1} - ${num2}`,
-                            answer: num1 - num2,
-                            difficulty: 'easy'
-                        };
+                        // Subtraction (positive result)
+                        const b = Math.floor(Math.random() * 10) + 1;
+                        const a = b + Math.floor(Math.random() * 10);
+                        return { expression: `${a} - ${b}`, answer: a - b, difficulty };
                     }
                 } else {
-                    // Hard problems: 2-digit operations or multiplication
-                    const type = Math.random() < 0.6 ? "multiplication" : "2digit";
-
-                    if (type === "2digit") {
-                        // 2-digit addition or subtraction
-                        const isAddition = Math.random() < 0.5;
-                        if (isAddition) {
-                            const num1 = Math.floor(Math.random() * 90) + 10; // 10-99
-                            const num2 = Math.floor(Math.random() * 90) + 10; // 10-99
-                            return {
-                                expression: `${num1} + ${num2}`,
-                                answer: num1 + num2,
-                                difficulty: 'hard'
-                            };
-                        } else {
-                            // Subtraction with positive result
-                            const num2 = Math.floor(Math.random() * 90) + 10; // 10-99
-                            const num1 = num2 + Math.floor(Math.random() * 90) + 10; // Ensure num1 > num2
-                            return {
-                                expression: `${num1} - ${num2}`,
-                                answer: num1 - num2,
-                                difficulty: 'hard'
-                            };
-                        }
+                    if (Math.random() < 0.6) {
+                        // Multiplication
+                        const a = Math.floor(Math.random() * 12) + 1;
+                        const b = Math.floor(Math.random() * 12) + 1;
+                        return { expression: `${a} × ${b}`, answer: a * b, difficulty };
                     } else {
-                        // Multiplication up to 12x12
-                        const num1 = Math.floor(Math.random() * 12) + 1; // 1-12
-                        const num2 = Math.floor(Math.random() * 12) + 1; // 1-12
-                        return {
-                            expression: `${num1} × ${num2}`,
-                            answer: num1 * num2,
-                            difficulty: 'hard'
-                        };
+                        // 2-digit operations
+                        const isAdd = Math.random() < 0.5;
+                        if (isAdd) {
+                            const a = Math.floor(Math.random() * 90) + 10;
+                            const b = Math.floor(Math.random() * 90) + 10;
+                            return { expression: `${a} + ${b}`, answer: a + b, difficulty };
+                        } else {
+                            const b = Math.floor(Math.random() * 90) + 10;
+                            const a = b + Math.floor(Math.random() * 90) + 10;
+                            return { expression: `${a} - ${b}`, answer: a - b, difficulty };
+                        }
                     }
                 }
-            },
+            }
 
-            // Find the lowest block in a specific column
-            getLowestBlockInColumn: function (column) {
-                for (let row = this.rows - 1; row >= 0; row--) {
-                    if (this.grid[column][row] !== null) {
-                        return this.grid[column][row];
-                    }
-                }
-                return null;
-            },
+            updateMathProblems() {
+                if (!this.gameInProgress) return;
 
-            // Check if any block in the grid has a math problem
-            hasAnyMathProblems: function () {
-                return this.blocks.some(block => block.hasMathProblem);
-            },
-
-            // Ensure the lowest block in each column has a math problem
-            updateMathProblems: function () {
                 // Clear all existing math problems
-                this.blocks.forEach(block => {
-                    if (block.hasMathProblem) {
-                        block.hasMathProblem = false;
-                        block.mathProblem = null;
-                        block.element.textContent = '';
-                        // Remove hard styling if it was there
-                        block.element.classList.remove('hard');
+                this.blocks.getChildren().forEach(block => {
+                    if (block.active && block.getData('problem')) {
+                        // Find and remove associated text
+                        this.children.list.forEach(child => {
+                            if (child.getData && child.getData('blockRef') === block) {
+                                child.destroy();
+                            }
+                        });
+                        // Clear problem data
+                        block.setData('problem', null);
+                        block.setTexture('blockEasy');
                     }
                 });
 
-                // Assign math problems to the lowest block in each column
-                for (let col = 0; col < this.columns; col++) {
-                    const lowestBlock = this.getLowestBlockInColumn(col);
-                    if (lowestBlock) {
-                        lowestBlock.hasMathProblem = true;
-
-                        // 25% chance of a hard problem
-                        const difficulty = (Math.random() < 0.25) ? 'hard' : 'easy';
-                        lowestBlock.mathProblem = this.createMathProblem(difficulty);
-                        lowestBlock.element.textContent = lowestBlock.mathProblem.expression;
-
-                        // Add visual styling for hard problems
-                        if (lowestBlock.mathProblem.difficulty === 'hard') {
-                            lowestBlock.element.classList.add('hard');
-                        }
+                // Group active blocks by column
+                const columnBlocks = {};
+                this.blocks.getChildren().forEach(block => {
+                    if (block.active) {
+                        const col = this.getBlockColumn(block.x);
+                        if (!columnBlocks[col]) columnBlocks[col] = [];
+                        columnBlocks[col].push(block);
                     }
-                }
-            },
+                });
 
-            // Remove a block from the game
-            removeBlock: function (block) {
-                // Remove from DOM
-                if (block.element && block.element.parentNode) {
-                    block.element.parentNode.removeChild(block.element);
-                }
+                // Assign problems to the lowest block in each column
+                Object.entries(columnBlocks).forEach(([col, blocks]) => {
+                    if (blocks.length > 0) {
+                        // Sort by y position (descending)
+                        blocks.sort((a, b) => b.y - a.y);
+                        const lowestBlock = blocks[0];
 
-                // Remove from grid
-                this.grid[block.column][block.row] = null;
+                        // Create new problem
+                        const difficulty = Math.random() < 0.25 ? 'hard' : 'easy';
+                        const problem = this.createMathProblem(difficulty);
+                        lowestBlock.setData('problem', problem);
 
-                // Remove from blocks array
-                const blockIndex = this.blocks.indexOf(block);
-                if (blockIndex !== -1) {
-                    this.blocks.splice(blockIndex, 1);
-                }
+                        // Update texture based on difficulty
+                        lowestBlock.setTexture(difficulty === 'hard' ? 'blockHard' : 'blockEasy');
 
-                // Check if we need to update math problems
-                if (block.hasMathProblem) {
-                    this.updateMathProblems();
-                }
+                        // Add text
+                        this.add.text(lowestBlock.x, lowestBlock.y, problem.expression, {
+                            fontSize: '16px',
+                            color: '#fff',
+                            fontStyle: 'bold'
+                        }).setOrigin(0.5).setData('blockRef', lowestBlock);
+                    }
+                });
+            }
 
-                // Check if all blocks are cleared
-                if (this.blocks.length === 0) {
-                    this.showVictory();
-                }
-            },
-
-            // Handle keyboard input for paddle movement
-            handleKeyPress: function (e) {
+            // Assign a math problem to the lowest block in a specific column
+            assignMathProblemToColumn(column) {
                 if (!this.gameInProgress) return;
 
-                if (e.key === 'ArrowLeft') {
-                    this.paddleX -= this.paddleSpeed;
-                    if (this.paddleX < 0) {
-                        this.paddleX = 0;
+                // Find all blocks in this column
+                const blocksInColumn = [];
+                this.blocks.getChildren().forEach(block => {
+                    if (block.active && this.getBlockColumn(block.x) === column) {
+                        blocksInColumn.push(block);
                     }
-                    this.paddle.style.left = this.paddleX + 'px';
-                } else if (e.key === 'ArrowRight') {
-                    this.paddleX += this.paddleSpeed;
-                    if (this.paddleX > this.container.offsetWidth - this.paddle.offsetWidth) {
-                        this.paddleX = this.container.offsetWidth - this.paddle.offsetWidth;
-                    }
-                    this.paddle.style.left = this.paddleX + 'px';
-                }
-            },
+                });
 
-            // Create a ball with specific trajectory
-            shootBall: function (x, y, directionX, directionY) {
-                const ball = {
-                    x: x - 9, // Center the 18px ball
-                    y: y,
-                    speedX: directionX * 5, // Speed multiplier
-                    speedY: directionY * 5,
-                    width: 18,
-                    height: 18,
-                    element: null
-                };
+                // If no blocks left in this column, nothing to do
+                if (blocksInColumn.length === 0) return;
 
-                // Create DOM element
-                const element = document.createElement('div');
-                element.className = 'ball';
-                element.style.left = ball.x + 'px';
-                element.style.top = ball.y + 'px';
+                // Sort by y position (descending) to find the lowest block
+                blocksInColumn.sort((a, b) => b.y - a.y);
+                const lowestBlock = blocksInColumn[0];
 
-                // Add to DOM
-                this.container.appendChild(element);
-
-                // Store element reference
-                ball.element = element;
-
-                // Add to balls array
-                this.balls.push(ball);
-
-                return ball;
-            },
-
-            // Shoot multiple balls in different directions (for hard problems)
-            shootMultipleBalls: function (x, y, targetX, targetY) {
-                // Calculate trajectory to target
-                const deltaX = targetX - x;
-                const deltaY = targetY - y;
-                const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-
-                // Normalize direction vectors
-                const dirX = deltaX / distance;
-                const dirY = deltaY / distance;
-
-                // Ball 1: Straight up
-                this.shootBall(x, y, 0, -1);
-
-                // Ball 2: Toward target
-                this.shootBall(x, y, dirX, dirY);
-
-                // Ball 3: Mirror angle (reflect horizontally)
-                this.shootBall(x, y, -dirX, dirY);
-            },
-
-            // Handle math answer input
-            handleAnswer: function (e) {
-                if (e.key !== 'Enter') return;
-
-                const userAnswer = parseInt(this.answerInput.value);
-                if (isNaN(userAnswer)) {
-                    this.showMessage("Please enter a number", "red");
-                    return;
+                // Clear any existing math problem
+                if (lowestBlock.getData('problem')) {
+                    // Remove associated text
+                    this.children.list.forEach(child => {
+                        if (child.getData && child.getData('blockRef') === lowestBlock) {
+                            child.destroy();
+                        }
+                    });
+                    lowestBlock.setData('problem', null);
                 }
 
-                // Check if any block with a math problem matches the answer
-                let correctBlock = null;
-                for (const block of this.blocks) {
-                    if (block.hasMathProblem && block.mathProblem.answer === userAnswer) {
-                        correctBlock = block;
-                        break;
-                    }
+                // Create and assign new math problem
+                const difficulty = Math.random() < 0.25 ? 'hard' : 'easy';
+                const problem = this.createMathProblem(difficulty);
+                lowestBlock.setData('problem', problem);
+
+                // Update texture based on difficulty
+                lowestBlock.setTexture(difficulty === 'hard' ? 'blockHard' : 'blockEasy');
+
+                // Add text
+                this.add.text(lowestBlock.x, lowestBlock.y, problem.expression, {
+                    fontSize: '16px',
+                    color: '#fff',
+                    fontStyle: 'bold'
+                }).setOrigin(0.5).setData('blockRef', lowestBlock);
+            }
+
+            update() {
+                if (!this.gameInProgress) return;
+
+                // Move paddle
+                if (this.cursors.left.isDown) {
+                    this.paddle.x -= 7;
+                } else if (this.cursors.right.isDown) {
+                    this.paddle.x += 7;
                 }
 
-                if (correctBlock) {
-                    // Get positions for shooting the ball
-                    const paddleCenterX = this.paddleX + this.paddle.offsetWidth / 2;
-                    const paddleTopY = this.container.offsetHeight - this.paddle.offsetHeight - 15;
+                // Keep paddle in bounds - adjusted for wider game area
+                this.paddle.x = Phaser.Math.Clamp(this.paddle.x, 40, 610);
 
-                    // Get target position (center of the block)
-                    const blockCenterX = correctBlock.x + correctBlock.width / 2;
-                    const blockCenterY = correctBlock.y + correctBlock.height / 2;
-
-                    // Check if it's a hard problem to determine shooting mode
-                    if (correctBlock.mathProblem.difficulty === 'hard') {
-                        // Hard problems shoot 3 balls
-                        this.shootMultipleBalls(paddleCenterX, paddleTopY, blockCenterX, blockCenterY);
-                    } else {
-                        // Easy problems shoot 1 ball
-                        // Calculate trajectory
-                        const deltaX = blockCenterX - paddleCenterX;
-                        const deltaY = blockCenterY - paddleTopY;
-                        const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-
-                        // Create the ball
-                        this.shootBall(paddleCenterX, paddleTopY, deltaX / distance, deltaY / distance);
-                    }
-
-                    // Award more points for hard problems
-                    const pointsValue = correctBlock.mathProblem.difficulty === 'hard' ? 50 : 20;
-
-                    // Remove the block
-                    this.removeBlock(correctBlock);
-
-                    // Update score
-                    this.score += pointsValue;
-                    this.scoreElement.textContent = this.score;
-
-                    this.showMessage(`Correct! +${pointsValue} points`, "green");
-                } else {
-                    this.showMessage("Try again!", "red");
-                    // Penalty
-                    this.score = Math.max(0, this.score - 5);
-                    this.scoreElement.textContent = this.score;
-                }
-
-                // Clear input and focus
-                this.answerInput.value = '';
-                this.answerInput.focus();
-            },
-
-            // Move all balls and check for collisions
-            moveBalls: function () {
-                const containerWidth = this.container.offsetWidth;
-                const containerHeight = this.container.offsetHeight;
-
-                for (let i = this.balls.length - 1; i >= 0; i--) {
-                    const ball = this.balls[i];
-
-                    // Store previous position
-                    const prevX = ball.x;
-                    const prevY = ball.y;
-
-                    // Calculate new position
-                    ball.x += ball.speedX;
-                    ball.y += ball.speedY;
-
-                    // Wall collisions
-                    if (ball.x <= 0 || ball.x + ball.width >= containerWidth) {
-                        ball.speedX = -ball.speedX;
-                        // Adjust to prevent sticking
+                // Handle ball movement and custom boundary collisions
+                this.balls.getChildren().forEach(ball => {
+                    if (ball.active) {
+                        // Handle manual wall collisions (top, left, right only)
                         if (ball.x <= 0) {
                             ball.x = 1;
-                        } else {
-                            ball.x = containerWidth - ball.width - 1;
+                            ball.body.velocity.x = Math.abs(ball.body.velocity.x);
+                        } else if (ball.x >= this.game.config.width - ball.width) {
+                            ball.x = this.game.config.width - ball.width - 1;
+                            ball.body.velocity.x = -Math.abs(ball.body.velocity.x);
+                        }
+
+                        if (ball.y <= 0) {
+                            ball.y = 1;
+                            ball.body.velocity.y = Math.abs(ball.body.velocity.y);
+                        }
+
+                        // Remove balls that fall off screen (no bounce at bottom)
+                        if (ball.y > this.game.config.height) {
+                            ball.destroy();
                         }
                     }
+                });
 
-                    if (ball.y <= 0) {
-                        ball.speedY = -ball.speedY;
-                        ball.y = 1; // Prevent sticking
-                    }
-
-                    // Out of bounds
-                    if (ball.y >= containerHeight) {
-                        // Remove ball
-                        if (ball.element && ball.element.parentNode) {
-                            ball.element.parentNode.removeChild(ball.element);
-                        }
-                        this.balls.splice(i, 1);
-                        continue;
-                    }
-
-                    // Update element position
-                    ball.element.style.left = ball.x + 'px';
-                    ball.element.style.top = ball.y + 'px';
-
-                    // Check for block collisions
-                    let collided = false;
-                    for (let j = this.blocks.length - 1; j >= 0; j--) {
-                        const block = this.blocks[j];
-
-                        // Check collision with expanded hitbox (less likely to go through gaps)
-                        if (
-                            ball.x + ball.width + 2 >= block.x &&
-                            ball.x - 2 <= block.x + block.width &&
-                            ball.y + ball.height + 2 >= block.y &&
-                            ball.y - 2 <= block.y + block.height
-                        ) {
-                            // Determine collision side based on previous position
-                            // Horizontal collision
-                            if ((prevX + ball.width < block.x && ball.x + ball.width >= block.x) ||
-                                (prevX > block.x + block.width && ball.x <= block.x + block.width)) {
-                                ball.speedX = -ball.speedX;
-                            }
-                            // Vertical collision
-                            else if ((prevY + ball.height < block.y && ball.y + ball.height >= block.y) ||
-                                (prevY > block.y + block.height && ball.y <= block.y + block.height)) {
-                                ball.speedY = -ball.speedY;
-                            }
-                            // Corner or ambiguous collision
-                            else {
-                                // Determine based on direction of approach
-                                const dx = (ball.x + ball.width / 2) - (block.x + block.width / 2);
-                                const dy = (ball.y + ball.height / 2) - (block.y + block.height / 2);
-
-                                if (Math.abs(dx) > Math.abs(dy)) {
-                                    ball.speedX = -ball.speedX;
-                                } else {
-                                    ball.speedY = -ball.speedY;
-                                }
-                            }
-
-                            // Update score
-                            this.score += 10;
-                            this.scoreElement.textContent = this.score;
-
-                            // Remove the block
-                            this.removeBlock(block);
-
-                            // Only handle one collision per frame
-                            collided = true;
-                            break;
+                // Check if we need to initialize math problems
+                if (this.gameInProgress && this.blocks.countActive() > 0) {
+                    const hasProblems = this.blocks.getChildren().some(b =>
+                        b.active && b.getData && b.getData('problem')
+                    );
+                    if (!hasProblems) {
+                        // Initialize math problems for all columns
+                        for (let col = 0; col < 8; col++) {
+                            this.assignMathProblemToColumn(col);
                         }
                     }
-
-                    // Adjust position after collision to prevent getting stuck
-                    if (collided) {
-                        ball.x += ball.speedX * 0.5;
-                        ball.y += ball.speedY * 0.5;
-                        ball.element.style.left = ball.x + 'px';
-                        ball.element.style.top = ball.y + 'px';
-                    }
                 }
-            },
-
-            showMessage: function (text, color) {
-                this.messageElement.textContent = text;
-                this.messageElement.style.color = color;
-
-                setTimeout(() => {
-                    this.messageElement.textContent = '';
-                }, 2000);
-            },
-
-            showVictory: function () {
-                this.gameInProgress = false;
-                this.gameOverElement.style.display = 'flex';
-                this.finalScoreElement.textContent = this.score;
-                document.querySelector('#game-over h2').textContent = "Victory!";
-            },
-
-            gameLoop: function () {
-                if (this.gameInProgress) {
-                    this.moveBalls();
-
-                    // Ensure there are always math problems on the lowest blocks
-                    if (!this.hasAnyMathProblems() && this.blocks.length > 0) {
-                        this.updateMathProblems();
-                    }
-                }
-                requestAnimationFrame(this.gameLoop.bind(this));
-            },
-
-            restart: function () {
-                // Clear game elements
-                while (this.container.firstChild) {
-                    if (this.container.firstChild !== this.paddle && this.container.firstChild !== this.gameOverElement) {
-                        this.container.removeChild(this.container.firstChild);
-                    }
-                }
-
-                // Reset game state
-                this.grid = Array(this.columns).fill().map(() => Array(this.rows).fill(null));
-                this.blocks = [];
-                this.balls = [];
-                this.score = 0;
-                this.scoreElement.textContent = '0';
-                this.gameInProgress = true;
-                this.gameOverElement.style.display = 'none';
-                this.messageElement.textContent = '';
-
-                // Initialize again
-                this.createBlocks();
-
-                // Focus on input
-                this.answerInput.value = '';
-                this.answerInput.focus();
             }
+
+            updateCursorPosition() {
+                // Calculate position based on text length
+                const textWidth = this.answerText.text.length * 12;
+                this.cursor.x = this.answerText.x - (this.answerText.width / 2) + textWidth + 12;
+            }
+
+            checkAnswer() {
+                const answer = parseInt(this.answerText.text);
+
+                // Always clear input field and update cursor on Enter
+                this.answerText.text = '';
+                this.updateCursorPosition();
+
+                if (isNaN(answer)) return;
+
+                // Find matching problem
+                let targetBlock = null;
+                this.blocks.getChildren().forEach(block => {
+                    const problem = block.getData('problem');
+                    if (problem && problem.answer === answer) targetBlock = block;
+                });
+
+                if (targetBlock) {
+                    const problem = targetBlock.getData('problem');
+                    const points = problem.difficulty === 'hard' ? 50 : 20;
+
+                    // Get position info before destroying the block
+                    const targetX = targetBlock.x;
+                    const targetY = targetBlock.y;
+
+                    // Now shoot ball(s) toward the block
+                    if (problem.difficulty === 'hard') {
+                        // Shoot 3 balls for hard problems
+                        this.shootBall(this.paddle.x, this.paddle.y - 10, targetX, targetY);
+                        this.shootBall(this.paddle.x, this.paddle.y - 10, 0, -1);
+                        this.shootBall(this.paddle.x, this.paddle.y - 10, -1, -1);
+                    } else {
+                        // Shoot 1 ball for easy problems
+                        this.shootBall(this.paddle.x, this.paddle.y - 10, targetX, targetY);
+                    }
+
+                    // Destroy the block after shooting the ball
+                    this.destroyBlock(targetBlock);
+
+                    // Update score
+                    this.score += points;
+                    this.scoreText.setText(`Score: ${this.score}`);
+                    this.showMessage(`Correct! +${points}`, '#27ae60');
+                } else {
+                    this.score = Math.max(0, this.score - 5);
+                    this.scoreText.setText(`Score: ${this.score}`);
+                    this.showMessage('Try again!', '#e74c3c');
+                }
+            }
+
+            shootBall(x, y, targetX, targetY) {
+                const ball = this.balls.create(x, y, 'ball');
+                const speed = 300;
+
+                if (typeof targetX === 'number' && typeof targetY === 'number') {
+                    // Calculate direction to target
+                    const angle = Phaser.Math.Angle.Between(x, y, targetX, targetY);
+                    this.physics.velocityFromRotation(angle, speed, ball.body.velocity);
+                } else {
+                    // Use provided direction
+                    const direction = { x: targetX, y: targetY };
+                    const norm = Math.sqrt(direction.x * direction.x + direction.y * direction.y);
+                    ball.setVelocity(
+                        direction.x / norm * speed,
+                        direction.y / norm * speed
+                    );
+                }
+
+                // Turn OFF world boundaries completely and handle manually
+                ball.setCollideWorldBounds(false);
+                ball.setBounce(1);
+
+                return ball;
+            }
+
+            // Centralized method for safely destroying blocks
+            destroyBlock(block) {
+                if (!block || !block.active) return;
+
+                // Get column information before destroying the block
+                const col = this.getBlockColumn(block.x);
+                const hadMathProblem = block.getData('problem') !== null;
+
+                // Find and destroy any associated text
+                this.children.list.forEach(child => {
+                    if (child.getData && child.getData('blockRef') === block) {
+                        child.destroy();
+                    }
+                });
+
+                // Destroy the block
+                block.destroy();
+
+                // Update score for ball hits (not for direct answer hits)
+                if (!hadMathProblem) {
+                    this.score += 10;
+                    this.scoreText.setText(`Score: ${this.score}`);
+                }
+
+                // If it had a math problem, assign a new math problem to the next block in this column
+                if (hadMathProblem) {
+                    this.assignMathProblemToColumn(col);
+                }
+
+                // Check for victory
+                if (this.blocks.countActive() === 0) {
+                    this.showVictory();
+                }
+            }
+
+            hitBlock(ball, block) {
+                // Simple delegation to the centralized destroy method
+                this.destroyBlock(block);
+            }
+
+            showMessage(text, color) {
+                if (this.messageText) {
+                    this.messageText.setText(text).setColor(color);
+                    this.time.delayedCall(2000, () => {
+                        if (this.messageText) {
+                            this.messageText.setText('');
+                        }
+                    });
+                }
+            }
+
+            showVictory() {
+                // Prevent double-calling
+                if (!this.gameInProgress) return;
+
+                this.gameInProgress = false;
+
+                try {
+                    this.physics.pause();
+
+                    const bg = this.add.rectangle(300, 250, 400, 200, 0x000000, 0.7);
+                    const text = this.add.text(300, 250,
+                        `Victory!\nYour score: ${this.score}`,
+                        { fontSize: '32px', color: '#fff', align: 'center' }
+                    ).setOrigin(0.5);
+
+                    const button = this.add.text(300, 320, 'Play Again', {
+                        fontSize: '24px',
+                        backgroundColor: '#3498db',
+                        padding: { x: 20, y: 10 },
+                        color: '#fff'
+                    }).setOrigin(0.5).setInteractive();
+
+                    button.on('pointerdown', () => {
+                        // Clean up existing game objects
+                        this.cleanupGameObjects();
+                        this.scene.restart();
+                    });
+                } catch (e) {
+                    console.error("Error showing victory screen:", e);
+                }
+            }
+
+            // Clean up game objects for restart
+            cleanupGameObjects() {
+                // Safely clean up all game objects to prevent errors
+                try {
+                    // Remove all collision handlers first
+                    this.physics.world.colliders.destroy();
+
+                    // Safely destroy all game objects
+                    this.balls.clear(true, true);
+                    this.blocks.clear(true, true);
+
+                    // Clear input handlers
+                    this.input.keyboard.shutdown();
+                } catch (e) {
+                    console.error("Error cleaning up game objects:", e);
+                }
+            }
+        }
+
+        // Game configuration
+        const config = {
+            type: Phaser.AUTO,
+            width: 650,  // Increased width from 600 to 650
+            height: 600,
+            parent: 'game-container',
+            physics: {
+                default: 'arcade',
+                arcade: { gravity: { y: 0 }, debug: false }
+            },
+            scene: MathGame
         };
 
-        // Initialize game
-        game.init();
+        // Start game
+        const game = new Phaser.Game(config);
     </script>
 </body>
 
