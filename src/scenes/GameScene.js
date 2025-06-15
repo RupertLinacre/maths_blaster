@@ -288,28 +288,41 @@ export default class GameScene extends Phaser.Scene {
     checkAnswer(answer) {
         if (isNaN(answer)) return;
 
-        // Check against gun problem first
-        if (answer === this.gunProblem.answer) {
+        // Check against gun problem first (allow float comparison)
+        let correct = false;
+        let correctAnswer = this.gunProblem.answer;
+        let context = 'gun';
+        if (Number(answer) === Number(this.gunProblem.answer)) {
+            correct = true;
             new FireGunStrategy().execute(this, this.gun);
-            return;
-        }
-
-        let destroyed = false;
-        // Iterate backwards when removing items from a group
-        const enemies = this.enemies.getChildren();
-        for (let i = enemies.length - 1; i >= 0; i--) {
-            const enemyGO = enemies[i]; // This is the Phaser GameObject (container)
-            const enemyInstance = enemyGO.getData('instance'); // Get our custom class instance
-
-            if (enemyInstance && enemyInstance.config.problem.answer === answer) {
-                enemyInstance.executeEffect();
-                destroyed = true;
-                break;
+        } else {
+            // Check enemies
+            const enemies = this.enemies.getChildren();
+            for (let i = enemies.length - 1; i >= 0; i--) {
+                const enemyGO = enemies[i];
+                const enemyInstance = enemyGO.getData('instance');
+                if (enemyInstance && Number(enemyInstance.config.problem.answer) === Number(answer)) {
+                    correct = true;
+                    correctAnswer = enemyInstance.config.problem.answer;
+                    context = 'enemy';
+                    enemyInstance.executeEffect();
+                    break;
+                }
+            }
+            if (!correct) {
+                // If not correct for any enemy
+                if (enemies.length > 0) {
+                    correctAnswer = enemies[0].getData('instance')?.config.problem.answer;
+                }
+                this.applyIncorrectAnswerPenalty();
             }
         }
-
-        if (!destroyed) {
-            this.applyIncorrectAnswerPenalty();
+        if (typeof window !== 'undefined') {
+            console.log(`[DEBUG] Answered (${context}):`, {
+                userAnswer: answer,
+                correctAnswer,
+                correct
+            });
         }
     }
 

@@ -50,8 +50,10 @@ window.addEventListener('load', () => {
         option.textContent = level.charAt(0).toUpperCase() + level.slice(1);
         difficultySelector.appendChild(option);
     });
-    // Set default value
-    difficultySelector.value = 'year1';
+    // Set default value from localStorage if available
+    const savedDifficulty = localStorage.getItem('mathsBlasterDifficulty');
+    const initialDifficulty = savedDifficulty && getYearLevels().includes(savedDifficulty) ? savedDifficulty : 'year1';
+    difficultySelector.value = initialDifficulty;
 
     // Populate problem types
     const problemTypes = ['all', ...getProblemTypes()]; // Add 'all' option
@@ -67,7 +69,9 @@ window.addEventListener('load', () => {
 
     // --- WIRE UP NEW CONTROL EVENTS ---
     difficultySelector.addEventListener('change', (event) => {
-        game.events.emit('difficulty-changed', { difficulty: event.target.value });
+        const value = event.target.value;
+        localStorage.setItem('mathsBlasterDifficulty', value);
+        game.events.emit('difficulty-changed', { difficulty: value });
     });
 
     problemTypeSelector.addEventListener('change', (event) => {
@@ -82,10 +86,8 @@ window.addEventListener('load', () => {
 
     // --- INITIALIZATION ---
     game.events.on('scene-created', () => {
-        // Lives are now fixed to 3, no need to emit lives-changed
-        // Send initial difficulty setting
-        const initialDifficulty = difficultySelector.value;
-        game.events.emit('difficulty-changed', { difficulty: initialDifficulty, initial: true });
+        // Send initial difficulty setting (force restart with loaded value)
+        game.events.emit('difficulty-changed', { difficulty: initialDifficulty, initial: false });
 
         // Send initial problem type setting
         const initialProblemType = problemTypeSelector.value;

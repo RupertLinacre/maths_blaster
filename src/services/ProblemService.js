@@ -24,10 +24,19 @@ class ProblemService {
      * Uses the base difficulty and specific problem type from the UI.
      */
     getEnemyProblem() {
-        return generateProblem({
+        const problem = generateProblem({
             yearLevel: this.baseDifficulty,
             type: this.problemType
         });
+        if (typeof window !== 'undefined') {
+            console.log('[DEBUG] Generated ENEMY problem:', {
+                question: problem.expression_short,
+                answer: problem.answer,
+                difficulty: this.baseDifficulty,
+                type: this.problemType || 'random'
+            });
+        }
+        return problem;
     }
 
     /**
@@ -39,10 +48,19 @@ class ProblemService {
         // Go one level up, but don't go past the end of the array
         const harderDifficulty = this.yearLevels[Math.min(currentIndex + 1, this.yearLevels.length - 1)];
 
-        return generateProblem({
+        const problem = generateProblem({
             yearLevel: harderDifficulty,
             type: null // Always generate a random type for harder problems
         });
+        if (typeof window !== 'undefined') {
+            console.log('[DEBUG] Generated HARDER problem:', {
+                question: problem.expression_short,
+                answer: problem.answer,
+                difficulty: harderDifficulty,
+                type: 'random'
+            });
+        }
+        return problem;
     }
 }
 

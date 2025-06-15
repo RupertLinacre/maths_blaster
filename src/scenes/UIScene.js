@@ -38,7 +38,12 @@ export default class UIScene extends Phaser.Scene {
         }
 
         const key = event.key;
-        if (key >= '0' && key <= '9') {
+        if ((key >= '0' && key <= '9') || key === '.') {
+            // Only allow one decimal point
+            if (key === '.' && this.currentInputString.includes('.')) {
+                // Do nothing if already has a decimal point
+                return;
+            }
             if (this.currentInputString.length < this.maxLength) {
                 this.currentInputString += key;
             }
@@ -52,7 +57,7 @@ export default class UIScene extends Phaser.Scene {
     }
 
     submitAnswer() {
-        const answer = parseInt(this.currentInputString);
+        const answer = parseFloat(this.currentInputString);
         this.currentInputString = '';
         this.inputDisplay.setText('_');
         if (isNaN(answer)) return;
