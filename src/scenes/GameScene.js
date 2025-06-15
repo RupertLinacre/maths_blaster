@@ -2,7 +2,8 @@
 
 import Phaser from 'phaser';
 import config from '../config/gameConfig.js';
-import { FireGunStrategy, DestroyEnemyStrategy, ShootAndDestroyEnemyStrategy } from '../strategies/EffectStrategy.js';
+import { FireGunStrategy } from '../strategies/EffectStrategy.js';
+import EnemyFactory from '../factories/EnemyFactory.js';
 
 export default class GameScene extends Phaser.Scene {
     constructor() {
@@ -23,6 +24,7 @@ export default class GameScene extends Phaser.Scene {
         this.gameOverText = null;
         this.enemySpawnTimer = null;
         this.uiScene = null;
+        this.enemyFactory = new EnemyFactory(this);
     }
 
     create() {
@@ -136,18 +138,7 @@ export default class GameScene extends Phaser.Scene {
 
     spawnEnemy() {
         if (this.gameOver) return;
-        const isRed = Math.random() < 0.2;
-        const { text, answer } = isRed ? this.generateGunProblem() : this.generateEnemyProblem();
-        const color = isRed ? config.COLORS.RED_ENEMY : config.COLORS.GREEN_ENEMY;
-        const x = Phaser.Math.Between(config.ENEMY_WIDTH / 2, this.sys.game.config.width - config.ENEMY_WIDTH / 2);
-        const enemyContainer = this.add.container(x, -config.ENEMY_HEIGHT);
-        const enemyBody = this.add.rectangle(0, 0, config.ENEMY_WIDTH, config.ENEMY_HEIGHT, color).setStrokeStyle(2, 0x333333);
-        const enemyText = this.add.text(0, 0, text, { fontSize: '20px', color: '#000' }).setOrigin(0.5);
-        enemyContainer.add([enemyBody, enemyText]);
-        enemyContainer.setData('answer', answer);
-        enemyContainer.setData('isRed', isRed);
-        this.enemies.add(enemyContainer);
-        enemyContainer.body.setVelocityY(this.enemySpeed);
+        this.enemyFactory.createEnemy();
     }
 
     fireGun() {
@@ -243,15 +234,13 @@ export default class GameScene extends Phaser.Scene {
         // Iterate backwards when removing items from a group
         const enemies = this.enemies.getChildren();
         for (let i = enemies.length - 1; i >= 0; i--) {
-            const enemy = enemies[i];
-            if (enemy.getData('answer') === answer) {
-                if (enemy.getData('isRed')) {
-                    new ShootAndDestroyEnemyStrategy().execute(this, enemy);
-                } else {
-                    new DestroyEnemyStrategy().execute(this, enemy);
-                }
+            const enemyGO = enemies[i]; // This is the Phaser GameObject (container)
+            const enemyInstance = enemyGO.getData('instance'); // Get our custom class instance
+
+            if (enemyInstance && enemyInstance.config.problem.answer === answer) {
+                enemyInstance.executeEffect();
                 destroyed = true;
-                break; // Only destroy one enemy per answer
+                break;
             }
         }
 
