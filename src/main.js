@@ -3,10 +3,20 @@ import GameScene from './scenes/GameScene.js';
 import UIScene from './scenes/UIScene.js';
 import { getYearLevels, getProblemTypes } from 'maths-game-problem-generator';
 
-// --- 1. PHASER GAME CONFIGURATION ---
+// --- 1. LOAD INITIAL SETTINGS & CONFIGURE GAME ---
+// Read saved settings from localStorage, with sensible defaults.
+const savedDifficulty = localStorage.getItem('mathsBlasterDifficulty');
+const allYearLevels = getYearLevels();
+const initialDifficulty = savedDifficulty && allYearLevels.includes(savedDifficulty) ? savedDifficulty : 'year1';
+
+const allProblemTypes = ['all', ...getProblemTypes()];
+const savedProblemType = localStorage.getItem('mathsBlasterProblemType');
+const initialProblemType = savedProblemType && allProblemTypes.includes(savedProblemType) ? savedProblemType : 'all';
+
+// Phaser Game Configuration
 const config = {
     type: Phaser.AUTO,
-    width: 1000, //CHANGED
+    width: 1000,
     height: 600,
     parent: 'game-container',
     backgroundColor: '#f0f8ff',
@@ -20,80 +30,62 @@ const config = {
     scene: [GameScene, UIScene]
 };
 
-// --- 2. CREATE THE PHASER GAME INSTANCE ---
+// Create the Phaser Game Instance
 const game = new Phaser.Game(config);
 
+// --- 2. SET INITIAL STATE IN PHASER REGISTRY ---
+// The registry is a global state manager for the game.
+// We set the initial values here so scenes can read them on creation.
+game.registry.set('difficulty', initialDifficulty);
+game.registry.set('problemType', initialProblemType);
 
-// --- 3. THE "GLUE" CODE: CONNECTING HTML TO PHASER ---
+
+// --- 3. CONNECT HTML UI TO PHASER ---
+// This runs once the entire page (including scripts, styles, images) is fully loaded.
 window.addEventListener('load', () => {
-    // Get a reference to the Phaser canvas
+    // Get a reference to the Phaser canvas and make it focusable
     const canvas = document.querySelector('#game-container canvas');
     if (!canvas) {
         console.error("Phaser canvas not found!");
         return;
     }
-
-    // A. Make the canvas focusable to receive keyboard events.
     canvas.setAttribute('tabindex', '0');
+    canvas.focus(); // Start with the game focused
 
-    // B. Get reference to our external HTML input.
-    // Removed livesInput: lives are now fixed to 3
-
-    // --- POPULATE NEW UI CONTROLS ---
+    // Get references to UI controls
     const difficultySelector = document.getElementById('difficulty-selector');
     const problemTypeSelector = document.getElementById('problem-type-selector');
 
-    // Populate difficulty levels
-    getYearLevels().forEach(level => {
+    // Populate and set the initial value for the difficulty selector
+    allYearLevels.forEach(level => {
         const option = document.createElement('option');
         option.value = level;
         option.textContent = level.charAt(0).toUpperCase() + level.slice(1);
         difficultySelector.appendChild(option);
     });
-    // Set default value from localStorage if available
-    const savedDifficulty = localStorage.getItem('mathsBlasterDifficulty');
-    const initialDifficulty = savedDifficulty && getYearLevels().includes(savedDifficulty) ? savedDifficulty : 'year1';
     difficultySelector.value = initialDifficulty;
 
-    // Populate problem types
-    const problemTypes = ['all', ...getProblemTypes()]; // Add 'all' option
-    problemTypes.forEach(type => {
+    // Populate and set the initial value for the problem type selector
+    allProblemTypes.forEach(type => {
         const option = document.createElement('option');
         option.value = type;
         option.textContent = type.charAt(0).toUpperCase() + type.slice(1);
         problemTypeSelector.appendChild(option);
     });
-    // Set default value
-    problemTypeSelector.value = 'all';
-    // --- END OF POPULATION CODE ---
+    problemTypeSelector.value = initialProblemType;
 
-    // --- WIRE UP NEW CONTROL EVENTS ---
+    // Wire up UI controls to update the game
     difficultySelector.addEventListener('change', (event) => {
         const value = event.target.value;
         localStorage.setItem('mathsBlasterDifficulty', value);
+        game.registry.set('difficulty', value); // Update registry
         game.events.emit('difficulty-changed', { difficulty: value });
     });
 
     problemTypeSelector.addEventListener('change', (event) => {
-        game.events.emit('problem-type-changed', { type: event.target.value });
-    });
-    // --- END OF NEW CONTROL EVENTS ---
-
-    // Removed livesInput focus/blur logic: lives are now fixed to 3
-
-
-    // Removed livesInput event: lives are now fixed to 3
-
-    // --- INITIALIZATION ---
-    game.events.on('scene-created', () => {
-        // Send initial difficulty setting (force restart with loaded value)
-        game.events.emit('difficulty-changed', { difficulty: initialDifficulty, initial: false });
-
-        // Send initial problem type setting
-        const initialProblemType = problemTypeSelector.value;
-        game.events.emit('problem-type-changed', { type: initialProblemType, initial: true });
-
-        // Start with the canvas focused.
-        canvas.focus();
+        const value = event.target.value;
+        localStorage.setItem('mathsBlasterProblemType', value);
+        game.registry.set('problemType', value); // Update registry
+        game.events.emit('problem-type-changed', { type: value });
     });
 });

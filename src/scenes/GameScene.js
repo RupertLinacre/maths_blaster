@@ -1,6 +1,8 @@
 // This file is the refactored GameScene moved from src/GameScene.js
 
 import Phaser from 'phaser';
+// ADD THIS IMPORT
+import { checkAnswer } from 'maths-game-problem-generator';
 import config, { getAdjustedFontSize } from '../config/gameConfig.js';
 import { FireGunStrategy } from '../strategies/EffectStrategy.js';
 import EnemyFactory from '../factories/EnemyFactory.js';
@@ -35,6 +37,16 @@ export default class GameScene extends Phaser.Scene {
         graphics.generateTexture('white_particle', 8, 8);
         graphics.destroy();
 
+        // --- NEW: INITIALIZE FROM REGISTRY ---
+        // Get initial settings that were set in main.js
+        const initialDifficulty = this.registry.get('difficulty');
+        const initialProblemType = this.registry.get('problemType');
+
+        // Configure the ProblemService BEFORE starting the game for the first time
+        ProblemService.setDifficulty(initialDifficulty);
+        ProblemService.setProblemType(initialProblemType);
+        // --- END OF NEW BLOCK ---
+
         this.uiScene = this.scene.get('UIScene');
         this.cameras.main.setBackgroundColor(config.COLORS.BACKGROUND);
         this.createGrid();
@@ -47,13 +59,9 @@ export default class GameScene extends Phaser.Scene {
         this.physics.add.overlap(this.enemyBullets, this.enemies, this.bulletHitEnemy, null, this);
         this.startGame();
 
-        // Setup Event Bus Listener
-        // this.game.events.on('lives-changed', this.handleLivesChange, this); // No longer needed
+        // Setup Event Bus Listeners for live changes from the UI
         this.game.events.on('difficulty-changed', this.handleDifficultyChange, this);
         this.game.events.on('problem-type-changed', this.handleProblemTypeChange, this);
-
-        // Emit an event to signal the scene is ready
-        this.game.events.emit('scene-created');
     }
 
     update(time, delta) {
@@ -113,18 +121,14 @@ export default class GameScene extends Phaser.Scene {
 
     handleDifficultyChange(data) {
         ProblemService.setDifficulty(data.difficulty);
-        // Restart the game if it's not the initial setup call
-        if (!data.initial) {
-            this.startGame();
-        }
+        // Any change from the UI dropdown should restart the game.
+        this.startGame();
     }
 
     handleProblemTypeChange(data) {
         ProblemService.setProblemType(data.type);
-        // Restart the game if it's not the initial setup call
-        if (!data.initial) {
-            this.startGame();
-        }
+        // Any change from the UI dropdown should restart the game.
+        this.startGame();
     }
 
     shutdown() {
@@ -288,11 +292,12 @@ export default class GameScene extends Phaser.Scene {
     checkAnswer(answer) {
         if (isNaN(answer)) return;
 
-        // Check against gun problem first (allow float comparison)
         let correct = false;
-        let correctAnswer = this.gunProblem.answer;
         let context = 'gun';
-        if (Number(answer) === Number(this.gunProblem.answer)) {
+        let correctAnswerForLog = this.gunProblem.answer;
+
+        // Use the library's checkAnswer function for the gun
+        if (checkAnswer(this.gunProblem, answer)) {
             correct = true;
             new FireGunStrategy().execute(this, this.gun);
         } else {
@@ -301,26 +306,29 @@ export default class GameScene extends Phaser.Scene {
             for (let i = enemies.length - 1; i >= 0; i--) {
                 const enemyGO = enemies[i];
                 const enemyInstance = enemyGO.getData('instance');
-                if (enemyInstance && Number(enemyInstance.config.problem.answer) === Number(answer)) {
+
+                if (enemyInstance && checkAnswer(enemyInstance.config.problem, answer)) {
                     correct = true;
-                    correctAnswer = enemyInstance.config.problem.answer;
                     context = 'enemy';
+                    correctAnswerForLog = enemyInstance.config.problem.answer;
                     enemyInstance.executeEffect();
-                    break;
+                    break; // Exit loop once a correct answer is found
                 }
             }
+
+            // If no correct answer was found for gun or any enemy
             if (!correct) {
-                // If not correct for any enemy
                 if (enemies.length > 0) {
-                    correctAnswer = enemies[0].getData('instance')?.config.problem.answer;
+                    correctAnswerForLog = enemies[0].getData('instance')?.config.problem.answer;
                 }
                 this.applyIncorrectAnswerPenalty();
             }
         }
+
         if (typeof window !== 'undefined') {
             console.log(`[DEBUG] Answered (${context}):`, {
                 userAnswer: answer,
-                correctAnswer,
+                correctAnswer: correctAnswerForLog,
                 correct
             });
         }
