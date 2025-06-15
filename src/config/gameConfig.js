@@ -1,5 +1,5 @@
 // src/config/gameConfig.js
-import { DestroyEnemyStrategy, ShootAndDestroyEnemyStrategy } from '../strategies/EffectStrategy.js';
+import { DestroyEnemyStrategy, ShootAndDestroyEnemyStrategy, SprayAndDestroyEnemyStrategy } from '../strategies/EffectStrategy.js';
 
 export function getAdjustedFontSize(textLength) {
     const BASE_SIZE = 20;
@@ -33,6 +33,7 @@ export default {
         INPUT_TEXT: '#ffffff',
         GREEN_ENEMY: 0x00ff00,
         RED_ENEMY: 0xff0000,
+        PURPLE_ENEMY: 0x9400D3, // DarkViolet
         SHOT: 0xFFD700,
         ENEMY_BULLET: 0xff0000
     },
@@ -41,17 +42,24 @@ export default {
     enemyTypes: [
         {
             name: 'Standard',
-            spawnWeight: 0.7, // 80% chance
+            spawnWeight: 0.7, // 70% chance
             color: 0x00ff00, // Green
             strategy: new DestroyEnemyStrategy(),
             problemType: 'enemy'
         },
         {
             name: 'Shooter',
-            spawnWeight: 0.3, // 20% chance
+            spawnWeight: 0.2, // 20% chance
             color: 0xff0000, // Red
             strategy: new ShootAndDestroyEnemyStrategy(),
             problemType: 'gun'
+        },
+        {
+            name: 'Sprayer',
+            spawnWeight: 0.1, // 10% chance
+            color: 0x9400D3, // Purple
+            strategy: new SprayAndDestroyEnemyStrategy(),
+            problemType: 'super-hard' // Custom type for the factory
         }
     ]
 };

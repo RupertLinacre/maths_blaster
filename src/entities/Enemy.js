@@ -29,7 +29,7 @@ export default class Enemy {
         container.body.setImmovable(true);
         // --- END OF LINE ---
 
-        container.body.setVelocityY(scene.enemySpeed);
+        // Velocity is now set by the factory, not here.
 
         // Attach data directly to the instance, not the Phaser container
         this.gameObject = container;

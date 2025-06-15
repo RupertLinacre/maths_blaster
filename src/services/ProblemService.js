@@ -62,6 +62,30 @@ class ProblemService {
         }
         return problem;
     }
+
+    /**
+     * Generates a problem for a "super hard" entity (purple enemies).
+     * Uses a difficulty two levels higher and a random problem type.
+     */
+    getSuperHarderProblem() {
+        const currentIndex = this.yearLevels.indexOf(this.baseDifficulty);
+        // Go two levels up, but don't go past the end of the array
+        const superHarderDifficulty = this.yearLevels[Math.min(currentIndex + 2, this.yearLevels.length - 1)];
+
+        const problem = generateProblem({
+            yearLevel: superHarderDifficulty,
+            type: null // Always generate a random type for super hard problems
+        });
+        if (typeof window !== 'undefined') {
+            console.log('[DEBUG] Generated SUPER HARDER problem:', {
+                question: problem.expression_short,
+                answer: problem.answer,
+                difficulty: superHarderDifficulty,
+                type: 'random'
+            });
+        }
+        return problem;
+    }
 }
 
 // Export a single instance of the service (Singleton pattern)

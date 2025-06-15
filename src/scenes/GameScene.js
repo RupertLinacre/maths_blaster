@@ -230,6 +230,26 @@ export default class GameScene extends Phaser.Scene {
         });
     }
 
+    // Creates a 360-degree spray of 12 bouncing bullets from (x, y)
+    sprayEnemyBullets(x, y) {
+        const bulletCount = 12;
+        const bulletSpeed = 300; // Faster than normal bullets
+
+        for (let i = 0; i < bulletCount; i++) {
+            const angle = (360 / bulletCount) * i;
+            const bullet = this.add.circle(x, y, 5, config.COLORS.PURPLE_ENEMY);
+            this.enemyBullets.add(bullet);
+            bullet.body.setCircle(5);
+            // Set data to identify it as a bouncing bullet
+            bullet.setData('bounces', true);
+            // Set physics properties for bouncing
+            bullet.body.setBounce(1);
+            bullet.body.setCollideWorldBounds(false);
+            // Fire the bullet at the calculated angle and speed
+            this.physics.velocityFromAngle(angle, bulletSpeed, bullet.body.velocity);
+        }
+    }
+
     loseLife() {
         if (this.gameOver) return;
         this.lives--;

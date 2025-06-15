@@ -19,12 +19,17 @@ export default class EnemyFactory {
         const selectedType = config.enemyTypes.find(type => {
             randomWeight -= type.spawnWeight;
             return randomWeight <= 0;
-        }) || config.enemyTypes[0]; // Fallback to the first type
+        }) || config.enemyTypes[0]; // Fallback
 
-        // 2. Get the appropriate problem for the selected type
-        const problemData = selectedType.problemType === 'gun'
-            ? ProblemService.getHarderProblem()
-            : ProblemService.getEnemyProblem();
+        // 2. Get the appropriate problem based on the custom problemType
+        let problemData;
+        if (selectedType.problemType === 'super-hard') {
+            problemData = ProblemService.getSuperHarderProblem();
+        } else if (selectedType.problemType === 'gun') {
+            problemData = ProblemService.getHarderProblem();
+        } else {
+            problemData = ProblemService.getEnemyProblem();
+        }
 
         // 3. Prepare the configuration object for the Enemy class
         const enemyConfig = {
@@ -38,12 +43,26 @@ export default class EnemyFactory {
             height: config.ENEMY_HEIGHT,
         };
 
-        // 4. Create the enemy instance
-        const x = Phaser.Math.Between(config.ENEMY_WIDTH / 2, scene.sys.game.config.width - config.ENEMY_WIDTH / 2);
-        // Appear half-way into the game area (y = ENEMY_HEIGHT / 2)
-        const enemy = new Enemy(scene, x, config.ENEMY_HEIGHT / 2, enemyConfig);
+        // 4. Determine spawn position and velocity based on enemy type
+        let x, y, velocity;
+        const isSprayer = selectedType.name === 'Sprayer';
 
-        // Link the GameObject back to our class instance
+        if (isSprayer) {
+            x = -config.ENEMY_WIDTH / 2; // Start off-screen left
+            y = 275; // Near the top
+            velocity = { x: 50, y: 0 }; // Move right
+        } else {
+            x = Phaser.Math.Between(config.ENEMY_WIDTH / 2, scene.sys.game.config.width - config.ENEMY_WIDTH / 2);
+            y = config.ENEMY_HEIGHT / 2; // Start just entering at the top
+            velocity = { x: 0, y: scene.enemySpeed };
+        }
+
+        // 5. Create the enemy instance and set its velocity
+        const enemy = new Enemy(scene, x, y, enemyConfig);
+        enemy.gameObject.body.setVelocity(velocity.x, velocity.y);
+
+        // 6. Set custom data for game rules
+        enemy.gameObject.setData('isThreat', !isSprayer);
         enemy.gameObject.setData('instance', enemy);
 
         return enemy;

@@ -31,4 +31,12 @@ export class ShootAndDestroyEnemyStrategy extends EffectStrategy {
     }
 }
 
+
+export class SprayAndDestroyEnemyStrategy extends EffectStrategy {
+    execute(scene, enemy) {
+        scene.sprayEnemyBullets(enemy.x, enemy.y);
+        scene.destroyEnemy(enemy);
+    }
+}
+
 export default EffectStrategy;
