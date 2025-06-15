@@ -1,4 +1,6 @@
 // src/config/gameConfig.js
+import { DestroyEnemyStrategy, ShootAndDestroyEnemyStrategy } from '../strategies/EffectStrategy.js';
+
 export default {
     ENEMY_WIDTH: 100,
     ENEMY_HEIGHT: 50,
@@ -20,5 +22,23 @@ export default {
         RED_ENEMY: 0xff0000,
         SHOT: 0xFFD700,
         ENEMY_BULLET: 0xff0000
-    }
+    },
+
+    // --- ENEMY TYPES CONFIGURATION ---
+    enemyTypes: [
+        {
+            name: 'Standard',
+            spawnWeight: 0.8, // 80% chance
+            color: 0x00ff00, // Green
+            strategy: new DestroyEnemyStrategy(),
+            problemType: 'enemy'
+        },
+        {
+            name: 'Shooter',
+            spawnWeight: 0.2, // 20% chance
+            color: 0xff0000, // Red
+            strategy: new ShootAndDestroyEnemyStrategy(),
+            problemType: 'gun'
+        }
+    ]
 };
