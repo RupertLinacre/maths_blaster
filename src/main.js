@@ -37,7 +37,7 @@ window.addEventListener('load', () => {
     canvas.setAttribute('tabindex', '0');
 
     // B. Get reference to our external HTML input.
-    const livesInput = document.getElementById('lives-input');
+    // Removed livesInput: lives are now fixed to 3
 
     // --- POPULATE NEW UI CONTROLS ---
     const difficultySelector = document.getElementById('difficulty-selector');
@@ -75,49 +75,14 @@ window.addEventListener('load', () => {
     });
     // --- END OF NEW CONTROL EVENTS ---
 
-    // C. When the HTML input is focused, disable Phaser's keyboard manager.
-    livesInput.addEventListener('focus', () => {
-        if (game.input && game.input.keyboard) {
-            game.input.keyboard.enabled = false;
-        }
-    });
-
-    // D. When the HTML input loses focus, re-enable Phaser's keyboard manager.
-    livesInput.addEventListener('blur', () => {
-        if (game.input && game.input.keyboard) {
-            game.input.keyboard.enabled = true;
-        }
-        // Don't auto-focus the canvas on blur, as the user might be clicking
-        // another HTML element. Let the new pointerdown listener handle it.
-    });
-
-    // --- START OF THE FIX ---
-    // This is the key change. Add a listener to the canvas itself.
-    // This ensures that clicking directly on the game canvas gives it focus,
-    // which is necessary to receive keyboard events.
-    canvas.addEventListener('pointerdown', () => {
-        livesInput.blur(); // Explicitly blur the input field
-        canvas.focus();    // And give focus to the canvas
-    });
-    // --- END OF THE FIX ---
+    // Removed livesInput focus/blur logic: lives are now fixed to 3
 
 
-    // --- DATA SYNCING ---
-    // Add 'input' event listener to send data to Phaser when the value changes.
-    livesInput.addEventListener('input', (event) => {
-        const lives = parseInt(event.target.value, 10);
-        if (!isNaN(lives)) {
-            game.events.emit('lives-changed', { lives: lives });
-        }
-    });
+    // Removed livesInput event: lives are now fixed to 3
 
     // --- INITIALIZATION ---
     game.events.on('scene-created', () => {
-        const initialLives = parseInt(livesInput.value, 10);
-        if (!isNaN(initialLives)) {
-            game.events.emit('lives-changed', { lives: initialLives, initial: true });
-        }
-
+        // Lives are now fixed to 3, no need to emit lives-changed
         // Send initial difficulty setting
         const initialDifficulty = difficultySelector.value;
         game.events.emit('difficulty-changed', { difficulty: initialDifficulty, initial: true });

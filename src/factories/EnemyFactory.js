@@ -40,7 +40,8 @@ export default class EnemyFactory {
 
         // 4. Create the enemy instance
         const x = Phaser.Math.Between(config.ENEMY_WIDTH / 2, scene.sys.game.config.width - config.ENEMY_WIDTH / 2);
-        const enemy = new Enemy(scene, x, -config.ENEMY_HEIGHT, enemyConfig);
+        // Appear half-way into the game area (y = ENEMY_HEIGHT / 2)
+        const enemy = new Enemy(scene, x, config.ENEMY_HEIGHT / 2, enemyConfig);
 
         // Link the GameObject back to our class instance
         enemy.gameObject.setData('instance', enemy);

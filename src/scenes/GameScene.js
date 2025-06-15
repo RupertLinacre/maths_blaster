@@ -12,7 +12,7 @@ export default class GameScene extends Phaser.Scene {
         this.score = 0;
         this.level = 1;
         this.lives = 3;
-        this.initialLives = 3;
+        this.initialLives = 3; // Fixed, not settable from UI
         this.gameOver = false;
         this.enemySpeed = config.BASE_ENEMY_SPEED;
         this.enemySpawnInterval = config.BASE_ENEMY_SPAWN_INTERVAL;
@@ -42,7 +42,7 @@ export default class GameScene extends Phaser.Scene {
         this.startGame();
 
         // Setup Event Bus Listener
-        this.game.events.on('lives-changed', this.handleLivesChange, this);
+        // this.game.events.on('lives-changed', this.handleLivesChange, this); // No longer needed
         this.game.events.on('difficulty-changed', this.handleDifficultyChange, this);
         this.game.events.on('problem-type-changed', this.handleProblemTypeChange, this);
 
@@ -64,7 +64,7 @@ export default class GameScene extends Phaser.Scene {
         this.gameOver = false;
         this.score = 0;
         this.level = 1;
-        this.lives = this.initialLives;
+        this.lives = 3; // Always 3 lives
         this.enemySpeed = config.BASE_ENEMY_SPEED;
         this.enemySpawnInterval = config.BASE_ENEMY_SPAWN_INTERVAL;
         this.enemies.clear(true, true);
@@ -100,19 +100,9 @@ export default class GameScene extends Phaser.Scene {
     }
 
 
+    // Lives are now fixed to 3; handleLivesChange is no longer needed
     handleLivesChange(data) {
-        const lives = data.lives > 0 ? data.lives : 3;
-        this.initialLives = lives;
-
-        // The 'initial' flag is sent only on the first load.
-        // For any subsequent change, we restart the game.
-        if (!data.initial) {
-            this.startGame();
-        } else {
-            // On initial load, just make sure the value is set. startGame() will use it.
-            this.lives = this.initialLives;
-            this.updateLivesDisplay();
-        }
+        // No-op
     }
 
     handleDifficultyChange(data) {
@@ -132,7 +122,7 @@ export default class GameScene extends Phaser.Scene {
     }
 
     shutdown() {
-        this.game.events.off('lives-changed', this.handleLivesChange, this);
+        // this.game.events.off('lives-changed', this.handleLivesChange, this); // No longer needed
         this.game.events.off('difficulty-changed', this.handleDifficultyChange, this);
         this.game.events.off('problem-type-changed', this.handleProblemTypeChange, this);
     }
@@ -220,7 +210,7 @@ export default class GameScene extends Phaser.Scene {
         const newLevel = Math.floor(this.score / 100) + 1;
         if (newLevel > this.level) {
             this.level = newLevel;
-            this.enemySpeed = config.BASE_ENEMY_SPEED + (this.level - 1) * 10;
+            this.enemySpeed = config.BASE_ENEMY_SPEED + (this.level - 1) * 3;
             this.enemySpawnInterval = Math.max(config.BASE_ENEMY_SPAWN_INTERVAL - (this.level - 1) * 500, 500);
             this.enemies.getChildren().forEach(e => e.body.setVelocityY(this.enemySpeed));
             this.enemySpawnTimer.delay = this.enemySpawnInterval;
