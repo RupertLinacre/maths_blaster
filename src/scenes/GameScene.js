@@ -29,6 +29,12 @@ export default class GameScene extends Phaser.Scene {
     }
 
     create() {
+        const graphics = this.add.graphics();
+        graphics.fillStyle(0xffffff, 1);
+        graphics.fillRect(0, 0, 8, 8); // Create an 8x8 white square
+        graphics.generateTexture('white_particle', 8, 8);
+        graphics.destroy();
+
         this.uiScene = this.scene.get('UIScene');
         this.cameras.main.setBackgroundColor(config.COLORS.BACKGROUND);
         this.createGrid();
@@ -259,7 +265,9 @@ export default class GameScene extends Phaser.Scene {
 
     bulletHitGun(gun, bullet) {
         bullet.destroy();
-        this.loseLife();
+        // Instead of losing a life, trigger the gun's special attack.
+        // We reuse the existing strategy for a clean, consistent implementation.
+        new FireGunStrategy().execute(this, this.gun);
     }
 
     // --- Centralized enemy destruction logic ---
@@ -306,15 +314,27 @@ export default class GameScene extends Phaser.Scene {
     }
 
     showExplosion(x, y) {
-        const particles = this.add.particles(x, y, 'particle', {
-            speed: { min: 50, max: 150 },
+        // --- REFINED: A quicker, smaller background flash ---
+        const flash = this.add.circle(x, y, 5, 0xffa500, 0.7); // Orange flash
+        this.tweens.add({
+            targets: flash,
+            scale: 5,
+            alpha: 0,
+            duration: 200, // Faster duration
+            ease: 'Cubic.easeOut',
+            onComplete: () => flash.destroy()
+        });
+
+        // --- REFINED: A toned-down particle effect using the correct texture ---
+        const particles = this.add.particles(x, y, 'white_particle', { // USE OUR NEW TEXTURE
+            speed: { min: 40, max: 150 },
             angle: { min: 0, max: 360 },
             scale: { start: 1, end: 0 },
-            blendMode: 'ADD',
-            lifespan: 500,
-            tint: 0xffd700
+            blendMode: 'NORMAL',
+            lifespan: 400, // Shorter lifespan
+            tint: [0xff4500, 0xffa500, 0xff6347] // Orangered, Orange, Tomato
         });
-        particles.explode(16);
+        particles.explode(12); // Fewer particles for a cleaner "pop"
     }
 
     showLevelUpEffect() {
