@@ -211,7 +211,7 @@ export default class GameScene extends Phaser.Scene {
     }
 
     shootEnemyBullets(x, y, options = {}) {
-        const directions = [{ x: -1, y: 0 }, { x: 1, y: 0 }, { x: 0, y: -1 }, { x: 0, y: 1 }];
+        const directions = [{ x: 1, y: -1 }, { x: 1, y: 1 }, { x: -1, y: 1 }, { x: -1, y: -1 }]; // NE, SE, SW, NW
         directions.forEach(dir => {
             const bullet = this.add.circle(x, y, 5, config.COLORS.ENEMY_BULLET);
             this.enemyBullets.add(bullet);
@@ -275,21 +275,22 @@ export default class GameScene extends Phaser.Scene {
     }
 
     handleBulletEnemyCollision(bullet, enemyGO) {
-        // If the bullet is marked as a 'bouncing' type, do nothing.
-        // The physics engine will handle the bounce automatically.
-        if (bullet.getData('bounces')) {
-            return;
-        }
-
-        // For all other bullets, use the old behavior.
-        bullet.destroy();
+        // Any bullet-on-enemy collision will destroy the enemy.
         const enemyInstance = enemyGO.getData('instance');
         if (enemyInstance) {
             enemyInstance.onHit();
         } else {
-            // Fallback for safety
+            // Fallback for safety, in case the instance isn't found.
             this.destroyEnemy(enemyGO);
         }
+
+        // Now, decide what to do with the bullet.
+        // If the bullet is NOT a bouncing type, destroy it.
+        if (!bullet.getData('bounces')) {
+            bullet.destroy();
+        }
+        // If it IS a bouncing bullet, we do nothing to it. The physics engine
+        // has already calculated the bounce, and the bullet will continue on its new path.
     }
 
     // --- Centralized enemy destruction logic ---
