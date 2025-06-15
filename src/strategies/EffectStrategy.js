@@ -19,18 +19,14 @@ export class FireGunStrategy extends EffectStrategy {
 
 export class DestroyEnemyStrategy extends EffectStrategy {
     execute(scene, enemy) {
-        scene.showExplosion(enemy.x, enemy.y);
-        enemy.destroy();
-        scene.updateScore(10);
+        scene.destroyEnemy(enemy);
     }
 }
 
 export class ShootAndDestroyEnemyStrategy extends EffectStrategy {
     execute(scene, enemy) {
         scene.shootEnemyBullets(enemy.x, enemy.y);
-        scene.showExplosion(enemy.x, enemy.y);
-        enemy.destroy();
-        scene.updateScore(10);
+        scene.destroyEnemy(enemy);
     }
 }
 

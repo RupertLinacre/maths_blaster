@@ -34,10 +34,8 @@ export default class Enemy {
 
     // --- ADD THIS NEW METHOD ---
     onHit() {
-        // The enemy is responsible for its own destruction logic.
-        this.scene.showExplosion(this.gameObject.x, this.gameObject.y);
-        this.scene.updateScore(10); // Or get points from config in the future.
-        this.gameObject.destroy();
+        // Delegate destruction and subsequent logic to the scene.
+        this.scene.destroyEnemy(this.gameObject);
     }
     // --- END OF NEW METHOD ---
 }

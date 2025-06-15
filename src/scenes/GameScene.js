@@ -260,6 +260,20 @@ export default class GameScene extends Phaser.Scene {
         this.loseLife();
     }
 
+    // --- Centralized enemy destruction logic ---
+    destroyEnemy(enemyGO) {
+        if (!enemyGO || !enemyGO.active) return; // Guard against multiple calls
+
+        this.showExplosion(enemyGO.x, enemyGO.y);
+        this.updateScore(10);
+        enemyGO.destroy();
+
+        // If that was the last enemy, spawn a new one immediately.
+        if (this.enemies.countActive(true) === 0 && !this.gameOver) {
+            this.spawnEnemy();
+        }
+    }
+
     // Input handling is now managed by UIScene
     checkAnswer(answer) {
         if (isNaN(answer)) return;
