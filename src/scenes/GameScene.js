@@ -26,6 +26,7 @@ export default class GameScene extends Phaser.Scene {
         this.gunProblemText = null;
         this.gameOverText = null;
         this.enemySpawnTimer = null;
+        this.sprayerSpawnTimer = null;
         this.uiScene = null;
         this.enemyFactory = new EnemyFactory(this);
     }
@@ -102,20 +103,35 @@ export default class GameScene extends Phaser.Scene {
         this.updateLevelDisplay();
         // This is the new call
         this.setGunProblem(ProblemService.getHarderProblem());
+        // Clear any existing timers before starting new ones
         if (this.enemySpawnTimer) this.enemySpawnTimer.remove();
+        if (this.sprayerSpawnTimer) this.sprayerSpawnTimer.remove();
+
+        // Timer for standard enemies (Green and Red)
         this.enemySpawnTimer = this.time.addEvent({
             delay: this.enemySpawnInterval,
-            callback: this.spawnEnemy,
+            callback: this.spawnStandardEnemy,
             callbackScope: this,
             loop: true
         });
-        this.time.delayedCall(500, () => this.spawnEnemy());
-        this.time.delayedCall(2000, () => this.spawnEnemy());
+
+        // Timer for the special Sprayer enemy (Purple)
+        this.sprayerSpawnTimer = this.time.addEvent({
+            delay: 30000, // Spawn every 30 seconds
+            callback: this.spawnSprayerEnemy,
+            callbackScope: this,
+            loop: true
+        });
+
+        // Initial spawns to populate the screen
+        this.time.delayedCall(500, () => this.spawnStandardEnemy());
+        this.time.delayedCall(2000, () => this.spawnStandardEnemy());
     }
 
     endGame() {
         this.gameOver = true;
         this.enemySpawnTimer.remove();
+        if (this.sprayerSpawnTimer) this.sprayerSpawnTimer.remove();
         this.enemies.setVelocityY(0);
         this.gameOverText = this.add.container(500, 300); // CHANGED
         const bg = this.add.rectangle(0, 0, 500, 200, 0x000000, 0.7).setOrigin(0.5);
@@ -147,6 +163,8 @@ export default class GameScene extends Phaser.Scene {
         // this.game.events.off('lives-changed', this.handleLivesChange, this); // No longer needed
         this.game.events.off('difficulty-changed', this.handleDifficultyChange, this);
         this.game.events.off('problem-type-changed', this.handleProblemTypeChange, this);
+        if (this.enemySpawnTimer) this.enemySpawnTimer.remove();
+        if (this.sprayerSpawnTimer) this.sprayerSpawnTimer.remove();
     }
 
     createGrid() {
@@ -184,9 +202,14 @@ export default class GameScene extends Phaser.Scene {
         if (this.uiScene) this.uiScene.updateLevel(this.level);
     }
 
-    spawnEnemy() {
+    spawnStandardEnemy() {
         if (this.gameOver) return;
-        this.enemyFactory.createEnemy();
+        this.enemyFactory.createStandardEnemy();
+    }
+
+    spawnSprayerEnemy() {
+        if (this.gameOver) return;
+        this.enemyFactory.createSprayerEnemy();
     }
 
     fireGun() {

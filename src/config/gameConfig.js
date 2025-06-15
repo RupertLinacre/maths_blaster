@@ -42,7 +42,7 @@ export default {
     enemyTypes: [
         {
             name: 'Standard',
-            spawnWeight: 0.7, // 70% chance
+            spawnWeight: 0.8, // 80% chance
             color: 0x00ff00, // Green
             strategy: new DestroyEnemyStrategy(),
             problemType: 'enemy'
@@ -53,13 +53,13 @@ export default {
             color: 0xff0000, // Red
             strategy: new ShootAndDestroyEnemyStrategy(),
             problemType: 'gun'
-        },
-        {
-            name: 'Sprayer',
-            spawnWeight: 0.1, // 10% chance
-            color: 0x9400D3, // Purple
-            strategy: new SprayAndDestroyEnemyStrategy(),
-            problemType: 'super-hard' // Custom type for the factory
         }
-    ]
+    ],
+
+    sprayerConfig: {
+        name: 'Sprayer',
+        color: 0x9400D3, // Purple
+        strategy: new SprayAndDestroyEnemyStrategy(),
+        problemType: 'super-hard' // Custom type for the factory
+    }
 };
