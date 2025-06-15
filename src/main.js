@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import GameScene from './scenes/GameScene.js';
 import UIScene from './scenes/UIScene.js';
+import { getYearLevels, getProblemTypes } from 'maths-game-problem-generator';
 
 // --- 1. PHASER GAME CONFIGURATION ---
 const config = {
@@ -37,6 +38,42 @@ window.addEventListener('load', () => {
 
     // B. Get reference to our external HTML input.
     const livesInput = document.getElementById('lives-input');
+
+    // --- POPULATE NEW UI CONTROLS ---
+    const difficultySelector = document.getElementById('difficulty-selector');
+    const problemTypeSelector = document.getElementById('problem-type-selector');
+
+    // Populate difficulty levels
+    getYearLevels().forEach(level => {
+        const option = document.createElement('option');
+        option.value = level;
+        option.textContent = level.charAt(0).toUpperCase() + level.slice(1);
+        difficultySelector.appendChild(option);
+    });
+    // Set default value
+    difficultySelector.value = 'year1';
+
+    // Populate problem types
+    const problemTypes = ['all', ...getProblemTypes()]; // Add 'all' option
+    problemTypes.forEach(type => {
+        const option = document.createElement('option');
+        option.value = type;
+        option.textContent = type.charAt(0).toUpperCase() + type.slice(1);
+        problemTypeSelector.appendChild(option);
+    });
+    // Set default value
+    problemTypeSelector.value = 'all';
+    // --- END OF POPULATION CODE ---
+
+    // --- WIRE UP NEW CONTROL EVENTS ---
+    difficultySelector.addEventListener('change', (event) => {
+        game.events.emit('difficulty-changed', { difficulty: event.target.value });
+    });
+
+    problemTypeSelector.addEventListener('change', (event) => {
+        game.events.emit('problem-type-changed', { type: event.target.value });
+    });
+    // --- END OF NEW CONTROL EVENTS ---
 
     // C. When the HTML input is focused, disable Phaser's keyboard manager.
     livesInput.addEventListener('focus', () => {

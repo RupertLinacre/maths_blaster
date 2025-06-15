@@ -3,6 +3,7 @@
 import Phaser from 'phaser';
 import Enemy from '../entities/Enemy.js';
 import config from '../config/gameConfig.js';
+import ProblemService from '../services/ProblemService.js';
 
 export default class EnemyFactory {
     constructor(scene) {
@@ -21,13 +22,16 @@ export default class EnemyFactory {
         }) || config.enemyTypes[0]; // Fallback to the first type
 
         // 2. Get the appropriate problem for the selected type
-        const problem = selectedType.problemType === 'gun'
-            ? scene.generateGunProblem()
-            : scene.generateEnemyProblem();
+        const problemData = selectedType.problemType === 'gun'
+            ? ProblemService.getHarderProblem()
+            : ProblemService.getEnemyProblem();
 
         // 3. Prepare the configuration object for the Enemy class
         const enemyConfig = {
-            problem: problem,
+            problem: {
+                text: problemData.expression_short,
+                answer: problemData.answer
+            },
             color: selectedType.color,
             strategy: selectedType.strategy,
             width: config.ENEMY_WIDTH,

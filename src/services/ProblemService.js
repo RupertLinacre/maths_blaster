@@ -1,0 +1,50 @@
+// src/services/ProblemService.js
+import { generateProblem, getYearLevels } from 'maths-game-problem-generator';
+
+class ProblemService {
+    constructor() {
+        this.yearLevels = getYearLevels();
+        this.baseDifficulty = 'year1'; // Default
+        this.problemType = null; // Default to 'all' (random)
+    }
+
+    setDifficulty(difficulty) {
+        if (this.yearLevels.includes(difficulty)) {
+            this.baseDifficulty = difficulty;
+        }
+    }
+
+    setProblemType(type) {
+        // 'all' from the dropdown will be represented as null for the generator
+        this.problemType = type === 'all' ? null : type;
+    }
+
+    /**
+     * Generates a problem for a standard enemy.
+     * Uses the base difficulty and specific problem type from the UI.
+     */
+    getEnemyProblem() {
+        return generateProblem({
+            yearLevel: this.baseDifficulty,
+            type: this.problemType
+        });
+    }
+
+    /**
+     * Generates a problem for a "hard" entity (red enemies, gun).
+     * Uses a difficulty one level higher and a random problem type.
+     */
+    getHarderProblem() {
+        const currentIndex = this.yearLevels.indexOf(this.baseDifficulty);
+        // Go one level up, but don't go past the end of the array
+        const harderDifficulty = this.yearLevels[Math.min(currentIndex + 1, this.yearLevels.length - 1)];
+
+        return generateProblem({
+            yearLevel: harderDifficulty,
+            type: null // Always generate a random type for harder problems
+        });
+    }
+}
+
+// Export a single instance of the service (Singleton pattern)
+export default new ProblemService();

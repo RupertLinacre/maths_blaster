@@ -4,6 +4,7 @@ import Phaser from 'phaser';
 import config from '../config/gameConfig.js';
 import { FireGunStrategy } from '../strategies/EffectStrategy.js';
 import EnemyFactory from '../factories/EnemyFactory.js';
+import ProblemService from '../services/ProblemService.js';
 
 export default class GameScene extends Phaser.Scene {
     constructor() {
@@ -71,8 +72,8 @@ export default class GameScene extends Phaser.Scene {
         this.updateScore(0);
         this.updateLivesDisplay();
         this.updateLevelDisplay();
-        this.gunProblem = this.generateGunProblem();
-        this.gunProblemText.setText(this.gunProblem.text);
+        this.gunProblem = ProblemService.getHarderProblem();
+        this.gunProblemText.setText(this.gunProblem.expression_short);
         if (this.enemySpawnTimer) this.enemySpawnTimer.remove();
         this.enemySpawnTimer = this.time.addEvent({
             delay: this.enemySpawnInterval,
@@ -308,31 +309,5 @@ export default class GameScene extends Phaser.Scene {
         });
     }
 
-    generateEnemyProblem() {
-        const isMultiplication = Math.random() < 0.3;
-        if (isMultiplication) {
-            const a = Math.floor(Math.random() * 10) + 1;
-            const b = Math.floor(Math.random() * 10) + 1;
-            return { text: `${a} × ${b}`, answer: a * b };
-        } else {
-            const maxNum = Math.min(10 + this.level * 5, 100);
-            const a = Math.floor(Math.random() * maxNum);
-            const b = Math.floor(Math.random() * maxNum);
-            return { text: `${a} + ${b}`, answer: a + b };
-        }
-    }
-
-    generateGunProblem() {
-        const isMultiplication = Math.random() < 0.6;
-        if (isMultiplication) {
-            const a = Math.floor(Math.random() * 12) + 1;
-            const b = Math.floor(Math.random() * 12) + 1;
-            return { text: `${a} × ${b}`, answer: a * b };
-        } else {
-            const maxNum = Math.min(20 + this.level * 3, 50);
-            const a = Math.floor(Math.random() * maxNum) + 10;
-            const b = Math.floor(Math.random() * maxNum) + 10;
-            return { text: `${a} + ${b}`, answer: a + b };
-        }
-    }
+    // --- REMOVED generateEnemyProblem and generateGunProblem ---
 }
