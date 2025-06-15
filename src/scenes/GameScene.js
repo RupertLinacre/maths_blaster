@@ -29,6 +29,9 @@ export default class GameScene extends Phaser.Scene {
         this.sprayerSpawnTimer = null;
         this.uiScene = null;
         this.enemyFactory = new EnemyFactory(this);
+        this.inputDisplay = null;
+        this.currentInputString = '';
+        this.maxLength = 10;
     }
 
     create() {
@@ -58,6 +61,20 @@ export default class GameScene extends Phaser.Scene {
         this.physics.add.overlap(this.shots, this.enemies, this.shotHitEnemy, null, this);
         this.physics.add.collider(this.enemyBullets, this.enemies, this.handleBulletEnemyCollision, null, this);
         this.startGame();
+
+        // --- Input Handling UI ---
+        const inputBox = this.add.rectangle(500, 480, 200, 40, config.COLORS.INPUT_BG).setStrokeStyle(2, config.COLORS.INPUT_BORDER);
+        this.inputDisplay = this.add.text(500, 480, '_', {
+            fontSize: '20px', color: config.COLORS.INPUT_TEXT, align: 'center', fixedWidth: 180
+        }).setOrigin(0.5);
+
+        // Set high depth to ensure input box is always on top
+        inputBox.setDepth(1000);
+        this.inputDisplay.setDepth(1001);
+
+        this.input.keyboard.on('keydown', this.handleKeyInput, this);
+
+        // --- End of Input Handling UI ---
 
         // Setup Event Bus Listeners for live changes from the UI
         this.game.events.on('difficulty-changed', this.handleDifficultyChange, this);
@@ -135,6 +152,9 @@ export default class GameScene extends Phaser.Scene {
         const finalScore = this.add.text(0, 10, `Final Score: ${this.score}`, { fontSize: '24px', color: '#ffffff' }).setOrigin(0.5);
         const restart = this.add.text(0, 60, 'Press ENTER to Play Again', { fontSize: '20px', color: '#ffffff' }).setOrigin(0.5);
         this.gameOverText.add([bg, title, finalScore, restart]);
+
+        // Ensure game over text appears on top of everything
+        this.gameOverText.setDepth(2000);
     }
 
 
@@ -421,6 +441,42 @@ export default class GameScene extends Phaser.Scene {
                 correct: wasCorrect
             });
         }
+    }
+
+    handleKeyInput(event) {
+        if (this.gameOver) {
+            if (event.key === 'Enter') {
+                this.startGame();
+            }
+            return;
+        }
+
+        const key = event.key;
+        if ((key >= '0' && key <= '9') || key === '.') {
+            // Only allow one decimal point
+            if (key === '.' && this.currentInputString.includes('.')) {
+                // Do nothing if already has a decimal point
+                return;
+            }
+            if (this.currentInputString.length < this.maxLength) {
+                this.currentInputString += key;
+            }
+        } else if (key === 'Backspace') {
+            this.currentInputString = this.currentInputString.slice(0, -1);
+        } else if (key === 'Enter' && this.currentInputString.length > 0) {
+            this.submitAnswer();
+        }
+
+        this.inputDisplay.setText(this.currentInputString || '_');
+    }
+
+    submitAnswer() {
+        const answer = parseFloat(this.currentInputString);
+        this.currentInputString = '';
+        this.inputDisplay.setText('_');
+        if (isNaN(answer)) return;
+
+        this.checkAnswer(answer);
     }
 
     showExplosion(x, y) {

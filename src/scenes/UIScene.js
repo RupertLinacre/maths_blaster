@@ -7,9 +7,6 @@ export default class UIScene extends Phaser.Scene {
         this.scoreText = null;
         this.livesText = null;
         this.levelText = null;
-        this.inputDisplay = null;
-        this.currentInputString = '';
-        this.maxLength = 10;
     }
 
     create() {
@@ -21,50 +18,8 @@ export default class UIScene extends Phaser.Scene {
         this.livesText = this.add.text(20, 50, 'Lives: 3', { fontSize: '24px', color: config.COLORS.SCORE_TEXT });
         this.levelText = this.add.text(20, 80, 'Level: 1', { fontSize: '24px', color: config.COLORS.SCORE_TEXT });
 
-        this.add.rectangle(500, 480, 200, 40, config.COLORS.INPUT_BG).setStrokeStyle(2, config.COLORS.INPUT_BORDER); // CHANGED
-        this.inputDisplay = this.add.text(500, 480, '_', {
-            fontSize: '20px', color: config.COLORS.INPUT_TEXT, align: 'center', fixedWidth: 180
-        }).setOrigin(0.5);
-
         // Setup Keyboard Input
-        this.input.keyboard.on('keydown', this.handleKeyInput, this);
         this.scene.sendToBack();
-    }
-
-    handleKeyInput(event) {
-        if (this.gameScene.gameOver) {
-            if (event.key === 'Enter') {
-                this.gameScene.startGame();
-            }
-            return;
-        }
-
-        const key = event.key;
-        if ((key >= '0' && key <= '9') || key === '.') {
-            // Only allow one decimal point
-            if (key === '.' && this.currentInputString.includes('.')) {
-                // Do nothing if already has a decimal point
-                return;
-            }
-            if (this.currentInputString.length < this.maxLength) {
-                this.currentInputString += key;
-            }
-        } else if (key === 'Backspace') {
-            this.currentInputString = this.currentInputString.slice(0, -1);
-        } else if (key === 'Enter' && this.currentInputString.length > 0) {
-            this.submitAnswer();
-        }
-
-        this.inputDisplay.setText(this.currentInputString || '_');
-    }
-
-    submitAnswer() {
-        const answer = parseFloat(this.currentInputString);
-        this.currentInputString = '';
-        this.inputDisplay.setText('_');
-        if (isNaN(answer)) return;
-
-        this.gameScene.checkAnswer(answer);
     }
 
     updateScore(score) {
