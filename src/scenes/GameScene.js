@@ -144,6 +144,8 @@ export default class GameScene extends Phaser.Scene {
         this.gun.add([gunBody, this.gunProblemText]);
         this.physics.world.enable(this.gun);
         this.gun.body.setSize(80, 80);
+        // Center the 80x80 physics body to match the visual rectangle
+        this.gun.body.setOffset(-40, -40);
     }
 
     updateScore(points) {

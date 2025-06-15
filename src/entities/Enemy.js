@@ -17,9 +17,12 @@ export default class Enemy {
         // 1. Add the container to the physics group first
         scene.enemies.add(container);
 
+
         // --- THE FIX ---
         // 2. Explicitly set the physics body size to match the visual rectangle
         container.body.setSize(config.width, config.height);
+        // 3. (ADD THIS LINE) Center the physics body on the container's origin to match the visual rectangle
+        container.body.setOffset(-config.width / 2, -config.height / 2);
         // --- END OF THE FIX ---
 
         container.body.setVelocityY(scene.enemySpeed);
