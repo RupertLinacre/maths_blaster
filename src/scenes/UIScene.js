@@ -20,8 +20,8 @@ export default class UIScene extends Phaser.Scene {
         this.livesText = this.add.text(20, 50, 'Lives: 3', { fontSize: '24px', color: config.COLORS.SCORE_TEXT });
         this.levelText = this.add.text(20, 80, 'Level: 1', { fontSize: '24px', color: config.COLORS.SCORE_TEXT });
 
-        this.add.rectangle(400, 480, 200, 40, config.COLORS.INPUT_BG).setStrokeStyle(2, config.COLORS.INPUT_BORDER);
-        this.inputDisplay = this.add.text(400, 480, '_', {
+        this.add.rectangle(500, 480, 200, 40, config.COLORS.INPUT_BG).setStrokeStyle(2, config.COLORS.INPUT_BORDER); // CHANGED
+        this.inputDisplay = this.add.text(500, 480, '_', {
             fontSize: '20px', color: config.COLORS.INPUT_TEXT, align: 'center', fixedWidth: 180
         }).setOrigin(0.5);
 

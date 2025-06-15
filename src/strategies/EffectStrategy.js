@@ -12,10 +12,8 @@ class EffectStrategy {
 export class FireGunStrategy extends EffectStrategy {
     execute(scene, gun) {
         scene.fireGun();
-        // Call the service to get a new, harder problem
-        scene.gunProblem = ProblemService.getHarderProblem();
-        // Use the short expression for display
-        scene.gunProblemText.setText(scene.gunProblem.expression_short);
+        // This is now a single, clean call to the scene's method.
+        scene.setGunProblem(ProblemService.getHarderProblem());
     }
 }
 

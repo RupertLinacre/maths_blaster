@@ -1,6 +1,19 @@
 // src/config/gameConfig.js
 import { DestroyEnemyStrategy, ShootAndDestroyEnemyStrategy } from '../strategies/EffectStrategy.js';
 
+export function getAdjustedFontSize(textLength) {
+    const BASE_SIZE = 20;
+    const MIN_SIZE = 12;
+    const MAX_CHARS = 7; // The number of characters that fit comfortably at BASE_SIZE
+
+    if (textLength <= MAX_CHARS) {
+        return `${BASE_SIZE}px`;
+    }
+
+    const newSize = Math.floor(BASE_SIZE * (MAX_CHARS / textLength));
+    return `${Math.max(MIN_SIZE, newSize)}px`;
+}
+
 export default {
     ENEMY_WIDTH: 100,
     ENEMY_HEIGHT: 50,
@@ -8,7 +21,7 @@ export default {
     BASE_ENEMY_SPAWN_INTERVAL: 4000,
     INCORRECT_ANSWER_SPEED_PENALTY: 5,
     SHOT_SPEED: 400,
-    GUN_X: 400,
+    GUN_X: 500, // CHANGED
     GUN_Y: 550,
     COLORS: {
         BACKGROUND: '#f0f8ff',

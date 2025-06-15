@@ -1,7 +1,7 @@
 // This file is the refactored GameScene moved from src/GameScene.js
 
 import Phaser from 'phaser';
-import config from '../config/gameConfig.js';
+import config, { getAdjustedFontSize } from '../config/gameConfig.js';
 import { FireGunStrategy } from '../strategies/EffectStrategy.js';
 import EnemyFactory from '../factories/EnemyFactory.js';
 import ProblemService from '../services/ProblemService.js';
@@ -74,8 +74,8 @@ export default class GameScene extends Phaser.Scene {
         this.updateScore(0);
         this.updateLivesDisplay();
         this.updateLevelDisplay();
-        this.gunProblem = ProblemService.getHarderProblem();
-        this.gunProblemText.setText(this.gunProblem.expression_short);
+        // This is the new call
+        this.setGunProblem(ProblemService.getHarderProblem());
         if (this.enemySpawnTimer) this.enemySpawnTimer.remove();
         this.enemySpawnTimer = this.time.addEvent({
             delay: this.enemySpawnInterval,
@@ -91,7 +91,7 @@ export default class GameScene extends Phaser.Scene {
         this.gameOver = true;
         this.enemySpawnTimer.remove();
         this.enemies.setVelocityY(0);
-        this.gameOverText = this.add.container(400, 300);
+        this.gameOverText = this.add.container(500, 300); // CHANGED
         const bg = this.add.rectangle(0, 0, 500, 200, 0x000000, 0.7).setOrigin(0.5);
         const title = this.add.text(0, -50, 'Game Over', { fontSize: '48px', color: '#ff0000' }).setOrigin(0.5);
         const finalScore = this.add.text(0, 10, `Final Score: ${this.score}`, { fontSize: '24px', color: '#ffffff' }).setOrigin(0.5);
@@ -312,7 +312,7 @@ export default class GameScene extends Phaser.Scene {
     }
 
     showLevelUpEffect() {
-        const text = this.add.text(400, 300, `LEVEL ${this.level}!`, {
+        const text = this.add.text(500, 300, `LEVEL ${this.level}!`, {
             fontSize: '48px', color: '#FF5500', align: 'center'
         }).setOrigin(0.5);
         this.tweens.add({
@@ -325,13 +325,20 @@ export default class GameScene extends Phaser.Scene {
     }
 
     showIncorrectAnswerEffect() {
-        const rect = this.add.rectangle(400, 300, 800, 600, 0xff0000, 0.3);
+        const rect = this.add.rectangle(500, 300, 1000, 600, 0xff0000, 0.3); // CHANGED
         this.tweens.add({
             targets: rect,
             alpha: 0,
             duration: 500,
             onComplete: () => rect.destroy()
         });
+    }
+    setGunProblem(problem) {
+        this.gunProblem = problem;
+        const newProblemText = this.gunProblem.expression_short;
+        const newFontSize = getAdjustedFontSize(newProblemText.length);
+        this.gunProblemText.setText(newProblemText);
+        this.gunProblemText.setStyle({ fontSize: newFontSize });
     }
 
     // --- REMOVED generateEnemyProblem and generateGunProblem ---

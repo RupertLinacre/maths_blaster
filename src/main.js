@@ -6,7 +6,7 @@ import { getYearLevels, getProblemTypes } from 'maths-game-problem-generator';
 // --- 1. PHASER GAME CONFIGURATION ---
 const config = {
     type: Phaser.AUTO,
-    width: 800,
+    width: 1000, //CHANGED
     height: 600,
     parent: 'game-container',
     backgroundColor: '#f0f8ff',

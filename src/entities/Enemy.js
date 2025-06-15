@@ -1,5 +1,6 @@
 // src/entities/Enemy.js
 import Phaser from 'phaser';
+import { getAdjustedFontSize } from '../config/gameConfig.js';
 
 export default class Enemy {
     constructor(scene, x, y, config) {
@@ -8,7 +9,8 @@ export default class Enemy {
 
         const container = scene.add.container(x, y);
         const body = scene.add.rectangle(0, 0, config.width, config.height, config.color).setStrokeStyle(2, 0x333333);
-        const text = scene.add.text(0, 0, this.config.problem.text, { fontSize: '20px', color: '#000' }).setOrigin(0.5);
+        const fontSize = getAdjustedFontSize(this.config.problem.text.length);
+        const text = scene.add.text(0, 0, this.config.problem.text, { fontSize: fontSize, color: '#000' }).setOrigin(0.5);
         container.add([body, text]);
 
 
