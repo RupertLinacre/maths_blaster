@@ -11,7 +11,15 @@ export default class Enemy {
         const text = scene.add.text(0, 0, this.config.problem.text, { fontSize: '20px', color: '#000' }).setOrigin(0.5);
         container.add([body, text]);
 
-        scene.enemies.add(container); // Add to the physics group
+
+        // 1. Add the container to the physics group first
+        scene.enemies.add(container);
+
+        // --- THE FIX ---
+        // 2. Explicitly set the physics body size to match the visual rectangle
+        container.body.setSize(config.width, config.height);
+        // --- END OF THE FIX ---
+
         container.body.setVelocityY(scene.enemySpeed);
 
         // Attach data directly to the instance, not the Phaser container
