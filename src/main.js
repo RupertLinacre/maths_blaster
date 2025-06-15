@@ -117,6 +117,15 @@ window.addEventListener('load', () => {
         if (!isNaN(initialLives)) {
             game.events.emit('lives-changed', { lives: initialLives, initial: true });
         }
+
+        // Send initial difficulty setting
+        const initialDifficulty = difficultySelector.value;
+        game.events.emit('difficulty-changed', { difficulty: initialDifficulty, initial: true });
+
+        // Send initial problem type setting
+        const initialProblemType = problemTypeSelector.value;
+        game.events.emit('problem-type-changed', { type: initialProblemType, initial: true });
+
         // Start with the canvas focused.
         canvas.focus();
     });

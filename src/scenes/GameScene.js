@@ -43,6 +43,8 @@ export default class GameScene extends Phaser.Scene {
 
         // Setup Event Bus Listener
         this.game.events.on('lives-changed', this.handleLivesChange, this);
+        this.game.events.on('difficulty-changed', this.handleDifficultyChange, this);
+        this.game.events.on('problem-type-changed', this.handleProblemTypeChange, this);
 
         // Emit an event to signal the scene is ready
         this.game.events.emit('scene-created');
@@ -101,15 +103,38 @@ export default class GameScene extends Phaser.Scene {
     handleLivesChange(data) {
         const lives = data.lives > 0 ? data.lives : 3;
         this.initialLives = lives;
-        // Only change current lives if not in a game or if it's the initial setting
-        if (!this.gameOver || data.initial) {
+
+        // The 'initial' flag is sent only on the first load.
+        // For any subsequent change, we restart the game.
+        if (!data.initial) {
+            this.startGame();
+        } else {
+            // On initial load, just make sure the value is set. startGame() will use it.
             this.lives = this.initialLives;
-            if (this.uiScene) this.uiScene.updateLives(this.lives);
+            this.updateLivesDisplay();
+        }
+    }
+
+    handleDifficultyChange(data) {
+        ProblemService.setDifficulty(data.difficulty);
+        // Restart the game if it's not the initial setup call
+        if (!data.initial) {
+            this.startGame();
+        }
+    }
+
+    handleProblemTypeChange(data) {
+        ProblemService.setProblemType(data.type);
+        // Restart the game if it's not the initial setup call
+        if (!data.initial) {
+            this.startGame();
         }
     }
 
     shutdown() {
         this.game.events.off('lives-changed', this.handleLivesChange, this);
+        this.game.events.off('difficulty-changed', this.handleDifficultyChange, this);
+        this.game.events.off('problem-type-changed', this.handleProblemTypeChange, this);
     }
 
     createGrid() {
