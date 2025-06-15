@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
-import GameScene from './GameScene.js';
+import GameScene from './scenes/GameScene.js';
+import UIScene from './scenes/UIScene.js';
 
 // --- 1. PHASER GAME CONFIGURATION ---
 const config = {
@@ -15,7 +16,7 @@ const config = {
             debug: false // Set to true to see physics bodies
         }
     },
-    scene: [GameScene]
+    scene: [GameScene, UIScene]
 };
 
 // --- 2. CREATE THE PHASER GAME INSTANCE ---

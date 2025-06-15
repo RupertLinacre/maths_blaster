@@ -1,83 +1,44 @@
+// This file is the refactored GameScene moved from src/GameScene.js
 import Phaser from 'phaser';
-
-// Game Constants from the original game
-const ENEMY_WIDTH = 100;
-const ENEMY_HEIGHT = 50;
-const BASE_ENEMY_SPEED = 30; // pixels per second
-const BASE_ENEMY_SPAWN_INTERVAL = 4000; // ms
-const INCORRECT_ANSWER_SPEED_PENALTY = 5; // pixels per second
-
-const SHOT_SPEED = 400; // pixels per second
-const GUN_X = 400;
-const GUN_Y = 550;
+import config from '../config/gameConfig.js';
 
 export default class GameScene extends Phaser.Scene {
     constructor() {
         super({ key: 'GameScene' });
-
-        // Game State
         this.score = 0;
         this.level = 1;
         this.lives = 3;
         this.initialLives = 3;
         this.gameOver = false;
-        this.enemySpeed = BASE_ENEMY_SPEED;
-        this.enemySpawnInterval = BASE_ENEMY_SPAWN_INTERVAL;
+        this.enemySpeed = config.BASE_ENEMY_SPEED;
+        this.enemySpawnInterval = config.BASE_ENEMY_SPAWN_INTERVAL;
         this.gunProblem = {};
-
-        // In-game input handling
-        this.currentInputString = '';
-        this.maxLength = 10;
-
-        // Phaser objects
         this.enemies = null;
         this.shots = null;
         this.enemyBullets = null;
         this.gun = null;
         this.gunProblemText = null;
-        this.inputDisplay = null;
-        this.scoreText = null;
-        this.livesText = null;
-        this.levelText = null;
         this.gameOverText = null;
         this.enemySpawnTimer = null;
+        this.uiScene = null;
     }
 
-    // --- PHASER SCENE LIFECYCLE ---
-
     create() {
-        this.cameras.main.setBackgroundColor('#f0f8ff');
+        this.uiScene = this.scene.get('UIScene');
+        this.cameras.main.setBackgroundColor(config.COLORS.BACKGROUND);
         this.createGrid();
-
-        // Initialize Physics Groups
         this.enemies = this.physics.add.group();
         this.shots = this.physics.add.group();
         this.enemyBullets = this.physics.add.group();
-
-        // Create UI
-        this.scoreText = this.add.text(20, 20, 'Score: 0', { fontSize: '24px', color: '#333' });
-        this.livesText = this.add.text(20, 50, `Lives: ${this.lives}`, { fontSize: '24px', color: '#333' });
-        this.levelText = this.add.text(20, 80, `Level: 1`, { fontSize: '24px', color: '#333' });
-
         this.createGun();
-        this.createInputDisplay();
-
-        // Setup Keyboard Input
-        this.input.keyboard.on('keydown', this.handleKeyInput, this);
-
-        // Setup Physics Collisions
         this.physics.add.overlap(this.shots, this.enemies, this.shotHitEnemy, null, this);
         this.physics.add.overlap(this.gun, this.enemyBullets, this.bulletHitGun, null, this);
         this.physics.add.overlap(this.enemyBullets, this.enemies, this.bulletHitEnemy, null, this);
-
-        // Start the game logic
         this.startGame();
     }
 
     update(time, delta) {
         if (this.gameOver) return;
-
-        // Check for enemies reaching the bottom
         this.enemies.getChildren().forEach(enemy => {
             if (enemy.y > this.sys.game.config.height) {
                 this.loseLife();
@@ -86,32 +47,22 @@ export default class GameScene extends Phaser.Scene {
         });
     }
 
-    // --- GAME SETUP & STATE ---
-
     startGame() {
         this.gameOver = false;
         this.score = 0;
         this.level = 1;
         this.lives = this.initialLives;
-        this.enemySpeed = BASE_ENEMY_SPEED;
-        this.enemySpawnInterval = BASE_ENEMY_SPAWN_INTERVAL;
-
-        // Clear existing game objects
+        this.enemySpeed = config.BASE_ENEMY_SPEED;
+        this.enemySpawnInterval = config.BASE_ENEMY_SPAWN_INTERVAL;
         this.enemies.clear(true, true);
         this.shots.clear(true, true);
         this.enemyBullets.clear(true, true);
         if (this.gameOverText) this.gameOverText.destroy();
-
-        // Reset UI
         this.updateScore(0);
         this.updateLivesDisplay();
         this.updateLevelDisplay();
-
-        // Generate new problems and start spawning
         this.gunProblem = this.generateGunProblem();
         this.gunProblemText.setText(this.gunProblem.text);
-
-        // Start enemy spawner
         if (this.enemySpawnTimer) this.enemySpawnTimer.remove();
         this.enemySpawnTimer = this.time.addEvent({
             delay: this.enemySpawnInterval,
@@ -119,8 +70,6 @@ export default class GameScene extends Phaser.Scene {
             callbackScope: this,
             loop: true
         });
-
-        // Spawn initial enemies
         this.time.delayedCall(500, () => this.spawnEnemy());
         this.time.delayedCall(2000, () => this.spawnEnemy());
     }
@@ -129,7 +78,6 @@ export default class GameScene extends Phaser.Scene {
         this.gameOver = true;
         this.enemySpawnTimer.remove();
         this.enemies.setVelocityY(0);
-
         this.gameOverText = this.add.container(400, 300);
         const bg = this.add.rectangle(0, 0, 500, 200, 0x000000, 0.7).setOrigin(0.5);
         const title = this.add.text(0, -50, 'Game Over', { fontSize: '48px', color: '#ff0000' }).setOrigin(0.5);
@@ -145,16 +93,14 @@ export default class GameScene extends Phaser.Scene {
     }
 
     setLives(lives) {
-        if (this.gameOver) return; // Don't change lives mid-game
+        if (this.gameOver) return;
         this.initialLives = lives > 0 ? lives : 3;
         this.lives = this.initialLives;
         this.updateLivesDisplay();
     }
 
-    // --- UI & VISUALS ---
-
     createGrid() {
-        const graphics = this.add.graphics({ lineStyle: { width: 1, color: 0xe6e6fa } });
+        const graphics = this.add.graphics({ lineStyle: { width: 1, color: config.COLORS.GRID } });
         for (let x = 0; x < this.sys.game.config.width; x += 50) {
             graphics.strokeLineShape(new Phaser.Geom.Line(x, 0, x, this.sys.game.config.height));
         }
@@ -164,53 +110,40 @@ export default class GameScene extends Phaser.Scene {
     }
 
     createGun() {
-        // Use a container to group gun elements
-        this.gun = this.add.container(GUN_X, GUN_Y);
-        const gunBody = this.add.rectangle(0, 0, 80, 80, 0x4169E1).setStrokeStyle(2, 0x000000);
+        this.gun = this.add.container(config.GUN_X, config.GUN_Y);
+        const gunBody = this.add.rectangle(0, 0, 80, 80, config.COLORS.GUN).setStrokeStyle(2, 0x000000);
         this.gunProblemText = this.add.text(0, 0, '', { fontSize: '20px', color: 'white', align: 'center' }).setOrigin(0.5);
         this.gun.add([gunBody, this.gunProblemText]);
         this.physics.world.enable(this.gun);
         this.gun.body.setSize(80, 80);
     }
 
-    createInputDisplay() {
-        this.add.rectangle(400, 480, 200, 40, 0x333333).setStrokeStyle(2, 0xaaaaaa);
-        this.inputDisplay = this.add.text(400, 480, '_', {
-            fontSize: '20px', color: '#ffffff', align: 'center', fixedWidth: 180
-        }).setOrigin(0.5);
-    }
-
     updateScore(points) {
         this.score += points;
-        this.scoreText.setText(`Score: ${this.score}`);
+        if (this.uiScene) this.uiScene.updateScore(this.score);
         this.updateDifficulty();
     }
 
     updateLivesDisplay() {
-        this.livesText.setText(`Lives: ${this.lives}`);
+        if (this.uiScene) this.uiScene.updateLives(this.lives);
     }
 
     updateLevelDisplay() {
-        this.levelText.setText(`Level: ${this.level}`);
+        if (this.uiScene) this.uiScene.updateLevel(this.level);
     }
-
-    // --- GAME LOGIC ---
 
     spawnEnemy() {
         if (this.gameOver) return;
         const isRed = Math.random() < 0.2;
         const { text, answer } = isRed ? this.generateGunProblem() : this.generateEnemyProblem();
-        const color = isRed ? 0xff0000 : 0x00ff00;
-        const x = Phaser.Math.Between(ENEMY_WIDTH / 2, this.sys.game.config.width - ENEMY_WIDTH / 2);
-
-        const enemyContainer = this.add.container(x, -ENEMY_HEIGHT);
-        const enemyBody = this.add.rectangle(0, 0, ENEMY_WIDTH, ENEMY_HEIGHT, color).setStrokeStyle(2, 0x333333);
+        const color = isRed ? config.COLORS.RED_ENEMY : config.COLORS.GREEN_ENEMY;
+        const x = Phaser.Math.Between(config.ENEMY_WIDTH / 2, this.sys.game.config.width - config.ENEMY_WIDTH / 2);
+        const enemyContainer = this.add.container(x, -config.ENEMY_HEIGHT);
+        const enemyBody = this.add.rectangle(0, 0, config.ENEMY_WIDTH, config.ENEMY_HEIGHT, color).setStrokeStyle(2, 0x333333);
         const enemyText = this.add.text(0, 0, text, { fontSize: '20px', color: '#000' }).setOrigin(0.5);
         enemyContainer.add([enemyBody, enemyText]);
-
         enemyContainer.setData('answer', answer);
         enemyContainer.setData('isRed', isRed);
-
         this.enemies.add(enemyContainer);
         enemyContainer.body.setVelocityY(this.enemySpeed);
     }
@@ -220,17 +153,14 @@ export default class GameScene extends Phaser.Scene {
             { x: -1, y: -1 }, { x: 1, y: -1 }, { x: -0.5, y: -1 },
             { x: 0.5, y: -1 }, { x: -1, y: 0 }, { x: 1, y: 0 }
         ];
-
         directions.forEach(dir => {
-            const shot = this.add.circle(this.gun.x, this.gun.y - 40, 8, 0xFFD700);
+            const shot = this.add.circle(this.gun.x, this.gun.y - 40, 8, config.COLORS.SHOT);
             this.shots.add(shot);
             shot.body.setCircle(8);
-            this.physics.velocityFromAngle(Phaser.Math.RadToDeg(Math.atan2(dir.y, dir.x)), SHOT_SPEED, shot.body.velocity);
+            this.physics.velocityFromAngle(Phaser.Math.RadToDeg(Math.atan2(dir.y, dir.x)), config.SHOT_SPEED, shot.body.velocity);
         });
-
-        // Visual feedback
         this.tweens.add({
-            targets: this.gun.getAt(0), // The rectangle
+            targets: this.gun.getAt(0),
             scaleX: 1.2,
             scaleY: 1.2,
             ease: 'Cubic.easeOut',
@@ -242,7 +172,7 @@ export default class GameScene extends Phaser.Scene {
     shootEnemyBullets(x, y) {
         const directions = [{ x: -1, y: 0 }, { x: 1, y: 0 }, { x: 0, y: -1 }, { x: 0, y: 1 }];
         directions.forEach(dir => {
-            const bullet = this.add.circle(x, y, 5, 0xff0000);
+            const bullet = this.add.circle(x, y, 5, config.COLORS.ENEMY_BULLET);
             this.enemyBullets.add(bullet);
             bullet.body.setCircle(5);
             this.physics.velocityFromAngle(Phaser.Math.RadToDeg(Math.atan2(dir.y, dir.x)), 150, bullet.body.velocity);
@@ -263,27 +193,20 @@ export default class GameScene extends Phaser.Scene {
         const newLevel = Math.floor(this.score / 100) + 1;
         if (newLevel > this.level) {
             this.level = newLevel;
-            this.enemySpeed = BASE_ENEMY_SPEED + (this.level - 1) * 10;
-            this.enemySpawnInterval = Math.max(BASE_ENEMY_SPAWN_INTERVAL - (this.level - 1) * 500, 500);
-
-            // Update running enemies speed
+            this.enemySpeed = config.BASE_ENEMY_SPEED + (this.level - 1) * 10;
+            this.enemySpawnInterval = Math.max(config.BASE_ENEMY_SPAWN_INTERVAL - (this.level - 1) * 500, 500);
             this.enemies.getChildren().forEach(e => e.body.setVelocityY(this.enemySpeed));
-
-            // Update timer
             this.enemySpawnTimer.delay = this.enemySpawnInterval;
-
             this.updateLevelDisplay();
             this.showLevelUpEffect();
         }
     }
 
     applyIncorrectAnswerPenalty() {
-        this.enemySpeed += INCORRECT_ANSWER_SPEED_PENALTY;
+        this.enemySpeed += config.INCORRECT_ANSWER_SPEED_PENALTY;
         this.enemies.getChildren().forEach(e => e.body.setVelocityY(this.enemySpeed));
         this.showIncorrectAnswerEffect();
     }
-
-    // --- COLLISION & EVENT HANDLERS ---
 
     shotHitEnemy(shot, enemy) {
         this.showExplosion(enemy.x, enemy.y);
@@ -304,42 +227,15 @@ export default class GameScene extends Phaser.Scene {
         this.loseLife();
     }
 
-    handleKeyInput(event) {
-        if (this.gameOver) {
-            if (event.key === 'Enter') {
-                this.startGame();
-            }
-            return;
-        }
-
-        const key = event.key;
-        if (key >= '0' && key <= '9') {
-            if (this.currentInputString.length < this.maxLength) {
-                this.currentInputString += key;
-            }
-        } else if (key === 'Backspace') {
-            this.currentInputString = this.currentInputString.slice(0, -1);
-        } else if (key === 'Enter' && this.currentInputString.length > 0) {
-            this.submitAnswer();
-        }
-
-        this.inputDisplay.setText(this.currentInputString || '_');
-    }
-
-    submitAnswer() {
-        const answer = parseInt(this.currentInputString);
-        this.currentInputString = '';
+    // Input handling is now managed by UIScene
+    checkAnswer(answer) {
         if (isNaN(answer)) return;
-
-        // Check against gun problem first
         if (answer === this.gunProblem.answer) {
             this.fireGun();
             this.gunProblem = this.generateGunProblem();
             this.gunProblemText.setText(this.gunProblem.text);
             return;
         }
-
-        // Check against enemies
         let destroyed = false;
         this.enemies.getChildren().forEach(enemy => {
             if (!destroyed && enemy.getData('answer') === answer) {
@@ -352,13 +248,10 @@ export default class GameScene extends Phaser.Scene {
                 destroyed = true;
             }
         });
-
         if (!destroyed) {
             this.applyIncorrectAnswerPenalty();
         }
     }
-
-    // --- EFFECT & HELPER FUNCTIONS ---
 
     showExplosion(x, y) {
         const particles = this.add.particles(x, y, 'particle', {
@@ -396,7 +289,7 @@ export default class GameScene extends Phaser.Scene {
     }
 
     generateEnemyProblem() {
-        const isMultiplication = Math.random() < 0.3; // Less multiplication for enemies
+        const isMultiplication = Math.random() < 0.3;
         if (isMultiplication) {
             const a = Math.floor(Math.random() * 10) + 1;
             const b = Math.floor(Math.random() * 10) + 1;
@@ -410,7 +303,7 @@ export default class GameScene extends Phaser.Scene {
     }
 
     generateGunProblem() {
-        const isMultiplication = Math.random() < 0.6; // More multiplication for the gun
+        const isMultiplication = Math.random() < 0.6;
         if (isMultiplication) {
             const a = Math.floor(Math.random() * 12) + 1;
             const b = Math.floor(Math.random() * 12) + 1;
