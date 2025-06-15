@@ -39,6 +39,12 @@ export default class GameScene extends Phaser.Scene {
         this.physics.add.overlap(this.gun, this.enemyBullets, this.bulletHitGun, null, this);
         this.physics.add.overlap(this.enemyBullets, this.enemies, this.bulletHitEnemy, null, this);
         this.startGame();
+
+        // Setup Event Bus Listener
+        this.game.events.on('lives-changed', this.handleLivesChange, this);
+
+        // Emit an event to signal the scene is ready
+        this.game.events.emit('scene-created');
     }
 
     update(time, delta) {
@@ -90,17 +96,19 @@ export default class GameScene extends Phaser.Scene {
         this.gameOverText.add([bg, title, finalScore, restart]);
     }
 
-    setInitialLives(lives) {
-        this.initialLives = lives > 0 ? lives : 3;
-        this.lives = this.initialLives;
-        this.updateLivesDisplay();
+
+    handleLivesChange(data) {
+        const lives = data.lives > 0 ? data.lives : 3;
+        this.initialLives = lives;
+        // Only change current lives if not in a game or if it's the initial setting
+        if (!this.gameOver || data.initial) {
+            this.lives = this.initialLives;
+            if (this.uiScene) this.uiScene.updateLives(this.lives);
+        }
     }
 
-    setLives(lives) {
-        if (this.gameOver) return;
-        this.initialLives = lives > 0 ? lives : 3;
-        this.lives = this.initialLives;
-        this.updateLivesDisplay();
+    shutdown() {
+        this.game.events.off('lives-changed', this.handleLivesChange, this);
     }
 
     createGrid() {

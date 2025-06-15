@@ -68,26 +68,19 @@ window.addEventListener('load', () => {
     // --- DATA SYNCING ---
     // Add 'input' event listener to send data to Phaser when the value changes.
     livesInput.addEventListener('input', (event) => {
-        const gameScene = game.scene.getScene('GameScene');
-        if (gameScene && gameScene.scene.isActive() && typeof gameScene.setLives === 'function') {
-            const lives = parseInt(event.target.value, 10);
-            if (!isNaN(lives)) {
-                gameScene.setLives(lives);
-            }
+        const lives = parseInt(event.target.value, 10);
+        if (!isNaN(lives)) {
+            game.events.emit('lives-changed', { lives: lives });
         }
     });
 
     // --- INITIALIZATION ---
-    const gameScene = game.scene.getScene('GameScene');
-    if (gameScene) {
-        // Wait for the scene's 'create' method to finish before initializing.
-        gameScene.events.on('create', () => {
-            const initialLives = parseInt(livesInput.value, 10);
-            if (!isNaN(initialLives)) {
-                gameScene.setInitialLives(initialLives);
-            }
-            // Start with the canvas focused.
-            canvas.focus();
-        });
-    }
+    game.events.on('scene-created', () => {
+        const initialLives = parseInt(livesInput.value, 10);
+        if (!isNaN(initialLives)) {
+            game.events.emit('lives-changed', { lives: initialLives, initial: true });
+        }
+        // Start with the canvas focused.
+        canvas.focus();
+    });
 });
