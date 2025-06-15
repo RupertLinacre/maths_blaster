@@ -25,6 +25,10 @@ export default class Enemy {
         container.body.setOffset(-config.width / 2, -config.height / 2);
         // --- END OF THE FIX ---
 
+        // --- ADD THIS LINE ---
+        container.body.setImmovable(true);
+        // --- END OF LINE ---
+
         container.body.setVelocityY(scene.enemySpeed);
 
         // Attach data directly to the instance, not the Phaser container

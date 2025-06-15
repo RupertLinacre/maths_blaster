@@ -55,8 +55,11 @@ export default class GameScene extends Phaser.Scene {
         this.enemyBullets = this.physics.add.group();
         this.createGun();
         this.physics.add.overlap(this.shots, this.enemies, this.shotHitEnemy, null, this);
-        this.physics.add.overlap(this.gun, this.enemyBullets, this.bulletHitGun, null, this);
-        this.physics.add.overlap(this.enemyBullets, this.enemies, this.bulletHitEnemy, null, this);
+        this.physics.add.collider(this.enemyBullets, this.enemies, this.handleBulletEnemyCollision, null, this);
+        this.physics.add.overlap(this.gun, this.enemyBullets, (gun, bullet) => {
+            bullet.destroy();
+            this.loseLife();
+        }, null, this);
         this.startGame();
 
         // Setup Event Bus Listeners for live changes from the UI
@@ -72,6 +75,15 @@ export default class GameScene extends Phaser.Scene {
                 enemy.destroy();
             }
         });
+
+        // --- ADD THIS BLOCK ---
+        // Clean up bullets that have gone off-screen
+        this.enemyBullets.getChildren().forEach(bullet => {
+            if (bullet.x < 0 || bullet.x > this.sys.game.config.width || bullet.y < 0 || bullet.y > this.sys.game.config.height) {
+                bullet.destroy();
+            }
+        });
+        // --- END OF BLOCK ---
     }
 
     startGame() {
@@ -198,13 +210,23 @@ export default class GameScene extends Phaser.Scene {
         });
     }
 
-    shootEnemyBullets(x, y) {
+    shootEnemyBullets(x, y, options = {}) {
         const directions = [{ x: -1, y: 0 }, { x: 1, y: 0 }, { x: 0, y: -1 }, { x: 0, y: 1 }];
         directions.forEach(dir => {
             const bullet = this.add.circle(x, y, 5, config.COLORS.ENEMY_BULLET);
             this.enemyBullets.add(bullet);
             bullet.body.setCircle(5);
             this.physics.velocityFromAngle(Phaser.Math.RadToDeg(Math.atan2(dir.y, dir.x)), 150, bullet.body.velocity);
+
+            // Set data on the bullet based on options
+            bullet.setData('bounces', options.bounces === true);
+
+            // --- ADD THIS BLOCK ---
+            if (options.bounces) {
+                bullet.body.setBounce(1); // Perfect bounce
+                bullet.body.setCollideWorldBounds(false); // Do NOT bounce off screen edges
+            }
+            // --- END OF BLOCK ---
         });
     }
 
@@ -252,26 +274,22 @@ export default class GameScene extends Phaser.Scene {
         }
     }
 
-    bulletHitEnemy(bullet, enemyGO) {
-        bullet.destroy(); // The bullet is always destroyed.
+    handleBulletEnemyCollision(bullet, enemyGO) {
+        // If the bullet is marked as a 'bouncing' type, do nothing.
+        // The physics engine will handle the bounce automatically.
+        if (bullet.getData('bounces')) {
+            return;
+        }
 
+        // For all other bullets, use the old behavior.
+        bullet.destroy();
         const enemyInstance = enemyGO.getData('instance');
         if (enemyInstance) {
-            // Delegate the handling of being hit to the enemy itself.
             enemyInstance.onHit();
         } else {
-            // Fallback for any object that might not have an instance.
-            this.showExplosion(enemyGO.x, enemyGO.y);
-            enemyGO.destroy();
-            this.updateScore(10);
+            // Fallback for safety
+            this.destroyEnemy(enemyGO);
         }
-    }
-
-    bulletHitGun(gun, bullet) {
-        bullet.destroy();
-        // Instead of losing a life, trigger the gun's special attack.
-        // We reuse the existing strategy for a clean, consistent implementation.
-        new FireGunStrategy().execute(this, this.gun);
     }
 
     // --- Centralized enemy destruction logic ---

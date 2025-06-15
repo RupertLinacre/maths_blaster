@@ -25,7 +25,8 @@ export class DestroyEnemyStrategy extends EffectStrategy {
 
 export class ShootAndDestroyEnemyStrategy extends EffectStrategy {
     execute(scene, enemy) {
-        scene.shootEnemyBullets(enemy.x, enemy.y);
+        // Pass { bounces: true } to create bouncing bullets
+        scene.shootEnemyBullets(enemy.x, enemy.y, { bounces: true });
         scene.destroyEnemy(enemy);
     }
 }
