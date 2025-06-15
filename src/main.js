@@ -5,17 +5,24 @@ import GameScene from './GameScene.js';
 const config = {
     type: Phaser.AUTO,
     width: 800,
-    height: 400,
+    height: 600,
     parent: 'game-container',
+    backgroundColor: '#f0f8ff',
+    physics: {
+        default: 'arcade',
+        arcade: {
+            gravity: { y: 0 },
+            debug: false // Set to true to see physics bodies
+        }
+    },
     scene: [GameScene]
 };
 
 // --- 2. CREATE THE PHASER GAME INSTANCE ---
 const game = new Phaser.Game(config);
 
+
 // --- 3. THE "GLUE" CODE: CONNECTING HTML TO PHASER ---
-// We wait for the game to be fully ready before setting up listeners.
-// The `setTimeout` trick from your original project is a reliable way to do this.
 window.addEventListener('load', () => {
     // Get a reference to the Phaser canvas
     const canvas = document.querySelector('#game-container canvas');
@@ -24,74 +31,60 @@ window.addEventListener('load', () => {
         return;
     }
 
-    // --- FOCUS MANAGEMENT ---
-    // This is the key part for handling keyboard input correctly.
-
-    // A. Make the canvas focusable so it can receive keyboard events.
+    // A. Make the canvas focusable to receive keyboard events.
     canvas.setAttribute('tabindex', '0');
 
-    // B. Get references to our external HTML inputs.
-    const stringInput = document.getElementById('string-input');
-    const numberInput = document.getElementById('number-input');
-    const htmlInputs = [stringInput, numberInput];
+    // B. Get reference to our external HTML input.
+    const livesInput = document.getElementById('lives-input');
 
-    // C. When an HTML input is focused, disable Phaser's keyboard manager.
-    // This stops the game from capturing keys while you're typing in the input fields.
-    htmlInputs.forEach(input => {
-        input.addEventListener('focus', () => {
-            if (game.input && game.input.keyboard) {
-                game.input.keyboard.enabled = false;
-                console.log("Phaser keyboard DISABLED (typing in HTML input).");
-            }
-        });
-
-        // D. When the HTML input loses focus, re-enable Phaser's keyboard manager.
-        input.addEventListener('blur', () => {
-            if (game.input && game.input.keyboard) {
-                game.input.keyboard.enabled = true;
-                console.log("Phaser keyboard ENABLED.");
-            }
-            // Also, give focus back to the canvas so game input works immediately.
-            canvas.focus();
-        });
-    });
-
-    // --- NEW FIX: Add a listener to the canvas itself ---
-    // This ensures that clicking directly on the game canvas gives it focus,
-    // which is necessary to receive keyboard events.
-    canvas.addEventListener('pointerdown', () => {
-        canvas.focus();
-        console.log("Canvas clicked, explicitly setting focus.");
-    });
-
-    // --- DATA SYNCING ---
-    // This part sends data from the HTML inputs into the Phaser game.
-
-    // Add 'input' event listeners to send data to Phaser whenever the value changes.
-    stringInput.addEventListener('input', (event) => {
-        const gameScene = game.scene.getScene('GameScene');
-        // Check if the scene is running and has the update method before calling it.
-        if (gameScene && gameScene.scene.isActive() && typeof gameScene.updateStringDisplay === 'function') {
-            gameScene.updateStringDisplay(event.target.value);
+    // C. When the HTML input is focused, disable Phaser's keyboard manager.
+    livesInput.addEventListener('focus', () => {
+        if (game.input && game.input.keyboard) {
+            game.input.keyboard.enabled = false;
         }
     });
 
-    numberInput.addEventListener('input', (event) => {
+    // D. When the HTML input loses focus, re-enable Phaser's keyboard manager.
+    livesInput.addEventListener('blur', () => {
+        if (game.input && game.input.keyboard) {
+            game.input.keyboard.enabled = true;
+        }
+        // Don't auto-focus the canvas on blur, as the user might be clicking
+        // another HTML element. Let the new pointerdown listener handle it.
+    });
+
+    // --- START OF THE FIX ---
+    // This is the key change. Add a listener to the canvas itself.
+    // This ensures that clicking directly on the game canvas gives it focus,
+    // which is necessary to receive keyboard events.
+    canvas.addEventListener('pointerdown', () => {
+        livesInput.blur(); // Explicitly blur the input field
+        canvas.focus();    // And give focus to the canvas
+    });
+    // --- END OF THE FIX ---
+
+
+    // --- DATA SYNCING ---
+    // Add 'input' event listener to send data to Phaser when the value changes.
+    livesInput.addEventListener('input', (event) => {
         const gameScene = game.scene.getScene('GameScene');
-        if (gameScene && gameScene.scene.isActive() && typeof gameScene.updateNumberDisplay === 'function') {
-            gameScene.updateNumberDisplay(event.target.value);
+        if (gameScene && gameScene.scene.isActive() && typeof gameScene.setLives === 'function') {
+            const lives = parseInt(event.target.value, 10);
+            if (!isNaN(lives)) {
+                gameScene.setLives(lives);
+            }
         }
     });
 
     // --- INITIALIZATION ---
-    // Set the initial values in the game when it loads.
     const gameScene = game.scene.getScene('GameScene');
     if (gameScene) {
-        // We need to wait for the scene's 'create' method to finish.
-        // The 'create' event is a reliable way to do this.
+        // Wait for the scene's 'create' method to finish before initializing.
         gameScene.events.on('create', () => {
-            gameScene.updateStringDisplay(stringInput.value);
-            gameScene.updateNumberDisplay(numberInput.value);
+            const initialLives = parseInt(livesInput.value, 10);
+            if (!isNaN(initialLives)) {
+                gameScene.setInitialLives(initialLives);
+            }
             // Start with the canvas focused.
             canvas.focus();
         });
