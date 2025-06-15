@@ -49,7 +49,7 @@ export default class GameScene extends Phaser.Scene {
         // --- END OF NEW BLOCK ---
 
         this.uiScene = this.scene.get('UIScene');
-        this.cameras.main.setBackgroundColor(config.COLORS.BACKGROUND);
+        this.cameras.main.setBackgroundColor('rgba(0, 0, 0, 0)');
         this.createGrid();
         this.enemies = this.physics.add.group();
         this.shots = this.physics.add.group();

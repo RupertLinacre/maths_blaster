@@ -13,6 +13,7 @@ export default class UIScene extends Phaser.Scene {
     }
 
     create() {
+        this.cameras.main.setBackgroundColor(config.COLORS.BACKGROUND);
         this.gameScene = this.scene.get('GameScene');
 
         // Create UI elements
@@ -27,6 +28,7 @@ export default class UIScene extends Phaser.Scene {
 
         // Setup Keyboard Input
         this.input.keyboard.on('keydown', this.handleKeyInput, this);
+        this.scene.sendToBack();
     }
 
     handleKeyInput(event) {
