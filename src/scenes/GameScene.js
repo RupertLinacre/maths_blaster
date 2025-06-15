@@ -1,6 +1,8 @@
 // This file is the refactored GameScene moved from src/GameScene.js
+
 import Phaser from 'phaser';
 import config from '../config/gameConfig.js';
+import { FireGunStrategy, DestroyEnemyStrategy, ShootAndDestroyEnemyStrategy } from '../strategies/EffectStrategy.js';
 
 export default class GameScene extends Phaser.Scene {
     constructor() {
@@ -230,24 +232,29 @@ export default class GameScene extends Phaser.Scene {
     // Input handling is now managed by UIScene
     checkAnswer(answer) {
         if (isNaN(answer)) return;
+
+        // Check against gun problem first
         if (answer === this.gunProblem.answer) {
-            this.fireGun();
-            this.gunProblem = this.generateGunProblem();
-            this.gunProblemText.setText(this.gunProblem.text);
+            new FireGunStrategy().execute(this, this.gun);
             return;
         }
+
         let destroyed = false;
-        this.enemies.getChildren().forEach(enemy => {
-            if (!destroyed && enemy.getData('answer') === answer) {
+        // Iterate backwards when removing items from a group
+        const enemies = this.enemies.getChildren();
+        for (let i = enemies.length - 1; i >= 0; i--) {
+            const enemy = enemies[i];
+            if (enemy.getData('answer') === answer) {
                 if (enemy.getData('isRed')) {
-                    this.shootEnemyBullets(enemy.x, enemy.y);
+                    new ShootAndDestroyEnemyStrategy().execute(this, enemy);
+                } else {
+                    new DestroyEnemyStrategy().execute(this, enemy);
                 }
-                this.showExplosion(enemy.x, enemy.y);
-                enemy.destroy();
-                this.updateScore(10);
                 destroyed = true;
+                break; // Only destroy one enemy per answer
             }
-        });
+        }
+
         if (!destroyed) {
             this.applyIncorrectAnswerPenalty();
         }
