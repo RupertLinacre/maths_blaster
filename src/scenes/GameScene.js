@@ -57,10 +57,6 @@ export default class GameScene extends Phaser.Scene {
         this.createGun();
         this.physics.add.overlap(this.shots, this.enemies, this.shotHitEnemy, null, this);
         this.physics.add.collider(this.enemyBullets, this.enemies, this.handleBulletEnemyCollision, null, this);
-        this.physics.add.overlap(this.gun, this.enemyBullets, (gun, bullet) => {
-            bullet.destroy();
-            this.loseLife();
-        }, null, this);
         this.startGame();
 
         // Setup Event Bus Listeners for live changes from the UI
@@ -117,7 +113,7 @@ export default class GameScene extends Phaser.Scene {
 
         // Timer for the special Sprayer enemy (Purple)
         this.sprayerSpawnTimer = this.time.addEvent({
-            delay: 3000, // Spawn every 30 seconds
+            delay: 30000, // Spawn every 30 seconds
             callback: this.spawnSprayerEnemy,
             callbackScope: this,
             loop: true
@@ -364,44 +360,65 @@ export default class GameScene extends Phaser.Scene {
     checkAnswer(answer) {
         if (isNaN(answer)) return;
 
-        let correct = false;
-        let context = 'gun';
-        let correctAnswerForLog = this.gunProblem.answer;
+        let gunCorrect = false;
+        let enemiesCorrectCount = 0;
+        let correctAnswerForLog = null;
 
-        // Use the library's checkAnswer function for the gun
+        // --- 1. Check Gun ---
+        // A correct gun answer does NOT preclude also checking enemies.
         if (checkAnswer(this.gunProblem, answer)) {
-            correct = true;
+            gunCorrect = true;
+            correctAnswerForLog = this.gunProblem.answer;
             new FireGunStrategy().execute(this, this.gun);
-        } else {
-            // Check enemies
-            const enemies = this.enemies.getChildren();
-            for (let i = enemies.length - 1; i >= 0; i--) {
-                const enemyGO = enemies[i];
+        }
+
+        // --- 2. Check Enemies ---
+        // Find all enemies that match the answer.
+        const matchingEnemies = this.enemies.getChildren().filter(enemyGO => {
+            const enemyInstance = enemyGO.getData('instance');
+            // We only care about active enemies
+            return enemyGO.active && enemyInstance && checkAnswer(enemyInstance.config.problem, answer);
+        });
+
+        enemiesCorrectCount = matchingEnemies.length;
+
+        if (enemiesCorrectCount > 0) {
+            // Use the answer from the first matched enemy for logging purposes if gun wasn't correct.
+            if (!correctAnswerForLog) {
+                correctAnswerForLog = matchingEnemies[0].getData('instance').config.problem.answer;
+            }
+
+            // Now execute the effect for each. This is safe as we're iterating over a filtered array,
+            // not the live physics group that gets modified during destruction.
+            matchingEnemies.forEach(enemyGO => {
                 const enemyInstance = enemyGO.getData('instance');
-
-                if (enemyInstance && checkAnswer(enemyInstance.config.problem, answer)) {
-                    correct = true;
-                    context = 'enemy';
-                    correctAnswerForLog = enemyInstance.config.problem.answer;
+                if (enemyInstance) {
                     enemyInstance.executeEffect();
-                    break; // Exit loop once a correct answer is found
                 }
-            }
+            });
+        }
 
-            // If no correct answer was found for gun or any enemy
-            if (!correct) {
-                if (enemies.length > 0) {
-                    correctAnswerForLog = enemies[0].getData('instance')?.config.problem.answer;
-                }
-                this.applyIncorrectAnswerPenalty();
-            }
+        // --- 3. Handle Penalties & Logging ---
+        const wasCorrect = gunCorrect || (enemiesCorrectCount > 0);
+
+        if (!wasCorrect) {
+            this.applyIncorrectAnswerPenalty();
         }
 
         if (typeof window !== 'undefined') {
+            let context = 'incorrect';
+            if (gunCorrect && enemiesCorrectCount > 0) {
+                context = `gun + ${enemiesCorrectCount} enemy(s)`;
+            } else if (gunCorrect) {
+                context = 'gun';
+            } else if (enemiesCorrectCount > 0) {
+                context = `${enemiesCorrectCount} enemy(s)`;
+            }
+
             console.log(`[DEBUG] Answered (${context}):`, {
                 userAnswer: answer,
-                correctAnswer: correctAnswerForLog,
-                correct
+                correctAnswer: wasCorrect ? correctAnswerForLog : 'N/A',
+                correct: wasCorrect
             });
         }
     }
