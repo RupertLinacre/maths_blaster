@@ -117,7 +117,7 @@ export default class GameScene extends Phaser.Scene {
 
         // Timer for the special Sprayer enemy (Purple)
         this.sprayerSpawnTimer = this.time.addEvent({
-            delay: 30000, // Spawn every 30 seconds
+            delay: 3000, // Spawn every 30 seconds
             callback: this.spawnSprayerEnemy,
             callbackScope: this,
             loop: true
@@ -289,7 +289,12 @@ export default class GameScene extends Phaser.Scene {
             this.level = newLevel;
             this.enemySpeed = config.BASE_ENEMY_SPEED + (this.level - 1) * 3;
             this.enemySpawnInterval = Math.max(config.BASE_ENEMY_SPAWN_INTERVAL - (this.level - 1) * 500, 500);
-            this.enemies.getChildren().forEach(e => e.body.setVelocityY(this.enemySpeed));
+            this.enemies.getChildren().forEach(e => {
+                // Only apply vertical speed to enemies that are supposed to move down.
+                if (e.getData('isThreat')) {
+                    e.body.setVelocityY(this.enemySpeed);
+                }
+            });
             this.enemySpawnTimer.delay = this.enemySpawnInterval;
             this.updateLevelDisplay();
             this.showLevelUpEffect();
@@ -298,7 +303,12 @@ export default class GameScene extends Phaser.Scene {
 
     applyIncorrectAnswerPenalty() {
         this.enemySpeed += config.INCORRECT_ANSWER_SPEED_PENALTY;
-        this.enemies.getChildren().forEach(e => e.body.setVelocityY(this.enemySpeed));
+        this.enemies.getChildren().forEach(e => {
+            // Only apply vertical speed to enemies that are supposed to move down.
+            if (e.getData('isThreat')) {
+                e.body.setVelocityY(this.enemySpeed);
+            }
+        });
         this.showIncorrectAnswerEffect();
     }
 
@@ -344,9 +354,9 @@ export default class GameScene extends Phaser.Scene {
         this.updateScore(10);
         enemyGO.destroy();
 
-        // If that was the last enemy, spawn a new one immediately.
+        // If that was the last enemy, spawn a new standard enemy immediately.
         if (this.enemies.countActive(true) === 0 && !this.gameOver) {
-            this.spawnEnemy();
+            this.spawnStandardEnemy();
         }
     }
 

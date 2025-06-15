@@ -52,7 +52,7 @@ export default class EnemyFactory {
 
         // 2. Create the enemy instance and set its properties
         const x = -config.ENEMY_WIDTH / 2; // Start off-screen left
-        const y = 75; // Near the top
+        const y = 400; // Near the top
         const enemy = this.buildEnemy(x, y, sprayerType, problemData);
 
         enemy.gameObject.body.setVelocity(50, 0); // Move right
