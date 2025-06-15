@@ -209,18 +209,34 @@ export default class GameScene extends Phaser.Scene {
         this.showIncorrectAnswerEffect();
     }
 
-    shotHitEnemy(shot, enemy) {
-        this.showExplosion(enemy.x, enemy.y);
-        shot.destroy();
-        enemy.destroy();
-        this.updateScore(10);
+    shotHitEnemy(shot, enemyGO) {
+        shot.destroy(); // The shot is always destroyed.
+
+        const enemyInstance = enemyGO.getData('instance');
+        if (enemyInstance) {
+            // Delegate the handling of being hit to the enemy itself.
+            enemyInstance.onHit();
+        } else {
+            // Fallback for any object that might not have an instance.
+            this.showExplosion(enemyGO.x, enemyGO.y);
+            enemyGO.destroy();
+            this.updateScore(10);
+        }
     }
 
-    bulletHitEnemy(bullet, enemy) {
-        this.showExplosion(enemy.x, enemy.y);
-        bullet.destroy();
-        enemy.destroy();
-        this.updateScore(10);
+    bulletHitEnemy(bullet, enemyGO) {
+        bullet.destroy(); // The bullet is always destroyed.
+
+        const enemyInstance = enemyGO.getData('instance');
+        if (enemyInstance) {
+            // Delegate the handling of being hit to the enemy itself.
+            enemyInstance.onHit();
+        } else {
+            // Fallback for any object that might not have an instance.
+            this.showExplosion(enemyGO.x, enemyGO.y);
+            enemyGO.destroy();
+            this.updateScore(10);
+        }
     }
 
     bulletHitGun(gun, bullet) {

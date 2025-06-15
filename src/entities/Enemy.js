@@ -21,4 +21,13 @@ export default class Enemy {
     executeEffect() {
         this.config.strategy.execute(this.scene, this.gameObject);
     }
+
+    // --- ADD THIS NEW METHOD ---
+    onHit() {
+        // The enemy is responsible for its own destruction logic.
+        this.scene.showExplosion(this.gameObject.x, this.gameObject.y);
+        this.scene.updateScore(10); // Or get points from config in the future.
+        this.gameObject.destroy();
+    }
+    // --- END OF NEW METHOD ---
 }
