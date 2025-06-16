@@ -130,7 +130,7 @@ export default class GameScene extends Phaser.Scene {
 
         // Timer for the special Sprayer enemy (Purple)
         this.sprayerSpawnTimer = this.time.addEvent({
-            delay: 30000, // Spawn every 30 seconds
+            delay: config.SPRAYER_SPAWN_INTERVAL,
             callback: this.spawnSprayerEnemy,
             callbackScope: this,
             loop: true
@@ -304,7 +304,7 @@ export default class GameScene extends Phaser.Scene {
         if (newLevel > this.level) {
             this.level = newLevel;
             this.enemySpeed = config.BASE_ENEMY_SPEED + (this.level - 1) * 3;
-            this.enemySpawnInterval = Math.max(config.BASE_ENEMY_SPAWN_INTERVAL - (this.level - 1) * 500, 500);
+            this.enemySpawnInterval = Math.max(config.BASE_ENEMY_SPAWN_INTERVAL - (this.level - 1) * config.SPAWN_INTERVAL_REDUCTION_PER_LEVEL, config.MIN_ENEMY_SPAWN_INTERVAL);
             this.enemies.getChildren().forEach(e => {
                 // Only apply vertical speed to enemies that are supposed to move down.
                 if (e.getData('isThreat')) {
