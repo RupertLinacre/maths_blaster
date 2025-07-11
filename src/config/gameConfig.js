@@ -22,13 +22,13 @@ export default {
     SPAWN_INTERVAL_REDUCTION_PER_LEVEL: 500,
     MIN_ENEMY_SPAWN_INTERVAL: 500,
     SPRAYER_SPAWN_INTERVAL: 30000,
+    INPUT_BOX_Y_OFFSET_FROM_BOTTOM: 120,
     INCORRECT_ANSWER_SPEED_PENALTY: 5,
     SHOT_SPEED: 400,
-    GUN_X: 500, // CHANGED
-    GUN_Y: 550,
+    GUN_Y_OFFSET_FROM_BOTTOM: 50,
     COLORS: {
         BACKGROUND: '#f0f8ff',
-        GRID: 0xe6e6fa,
+        GRID: 0x444444, // Darker grid for better contrast
         SCORE_TEXT: '#333',
         GUN: 0x4169E1,
         INPUT_BG: 0x333333,
