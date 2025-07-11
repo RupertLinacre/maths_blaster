@@ -9,6 +9,12 @@ const savedDifficulty = localStorage.getItem('mathsBlasterDifficulty');
 const allYearLevels = getYearLevels();
 const initialDifficulty = savedDifficulty && allYearLevels.includes(savedDifficulty) ? savedDifficulty : 'year1';
 
+const savedWidth = localStorage.getItem('mathsBlasterWidth');
+const initialWidth = savedWidth ? parseInt(savedWidth, 10) : 1000;
+
+const savedHeight = localStorage.getItem('mathsBlasterHeight');
+const initialHeight = savedHeight ? parseInt(savedHeight, 10) : 600;
+
 const allProblemTypes = ['all', ...getProblemTypes()];
 const savedProblemType = localStorage.getItem('mathsBlasterProblemType');
 const initialProblemType = savedProblemType && allProblemTypes.includes(savedProblemType) ? savedProblemType : 'all';
@@ -16,8 +22,8 @@ const initialProblemType = savedProblemType && allProblemTypes.includes(savedPro
 // Phaser Game Configuration
 const config = {
     type: Phaser.AUTO,
-    width: 1000,
-    height: 600,
+    width: initialWidth,
+    height: initialHeight,
     parent: 'game-container',
     backgroundColor: '#f0f8ff',
     physics: {
@@ -55,6 +61,8 @@ window.addEventListener('load', () => {
     // Get references to UI controls
     const difficultySelector = document.getElementById('difficulty-selector');
     const problemTypeSelector = document.getElementById('problem-type-selector');
+    const widthInput = document.getElementById('game-width-input');
+    const heightInput = document.getElementById('game-height-input');
 
     // Populate and set the initial value for the difficulty selector
     allYearLevels.forEach(level => {
@@ -74,6 +82,10 @@ window.addEventListener('load', () => {
     });
     problemTypeSelector.value = initialProblemType;
 
+    // Set initial values for width and height inputs
+    widthInput.value = initialWidth;
+    heightInput.value = initialHeight;
+
     // Wire up UI controls to update the game
     difficultySelector.addEventListener('change', (event) => {
         const value = event.target.value;
@@ -87,5 +99,17 @@ window.addEventListener('load', () => {
         localStorage.setItem('mathsBlasterProblemType', value);
         game.registry.set('problemType', value); // Update registry
         game.events.emit('problem-type-changed', { type: value });
+    });
+
+    widthInput.addEventListener('change', (event) => {
+        const value = event.target.value;
+        localStorage.setItem('mathsBlasterWidth', value);
+        window.location.reload(); // Reload to apply new canvas size
+    });
+
+    heightInput.addEventListener('change', (event) => {
+        const value = event.target.value;
+        localStorage.setItem('mathsBlasterHeight', value);
+        window.location.reload(); // Reload to apply new canvas size
     });
 });
