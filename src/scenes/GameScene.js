@@ -58,8 +58,8 @@ export default class GameScene extends Phaser.Scene {
         this.shots = this.physics.add.group();
         this.enemyBullets = this.physics.add.group();
         this.createGun();
-        this.physics.add.overlap(this.shots, this.enemies, this.shotHitEnemy, null, this);
-        this.physics.add.collider(this.enemyBullets, this.enemies, this.handleBulletEnemyCollision, null, this);
+        this.physics.add.overlap(this.shots, this.enemies, this.handleProjectileHitEnemy, null, this);
+        this.physics.add.collider(this.enemyBullets, this.enemies, this.handleProjectileHitEnemy, null, this);
         this.startGame();
 
         // --- Input Handling UI ---
@@ -157,6 +157,24 @@ export default class GameScene extends Phaser.Scene {
 
         // Ensure game over text appears on top of everything
         this.gameOverText.setDepth(2000);
+    }
+
+    handleProjectileHitEnemy(projectile, enemyGO) {
+        // 1. Trigger the enemy's main effect (which includes its destruction).
+        const enemyInstance = enemyGO.getData('instance');
+        if (enemyInstance && enemyInstance.gameObject.active) {
+            enemyInstance.onHit();
+        } else if (enemyGO.active) {
+            // Fallback for safety, in case the instance isn't found.
+            this.destroyEnemy(enemyGO);
+        }
+
+        // 2. Decide if the projectile should be destroyed.
+        // Player shots and non-bouncing enemy bullets are destroyed on impact.
+        // Bouncing enemy bullets will survive.
+        if (!projectile.getData('bounces')) {
+            projectile.destroy();
+        }
     }
 
 
@@ -330,40 +348,6 @@ export default class GameScene extends Phaser.Scene {
             }
         });
         this.showIncorrectAnswerEffect();
-    }
-
-    shotHitEnemy(shot, enemyGO) {
-        shot.destroy(); // The shot is always destroyed.
-
-        const enemyInstance = enemyGO.getData('instance');
-        if (enemyInstance) {
-            // Delegate the handling of being hit to the enemy itself.
-            enemyInstance.onHit();
-        } else {
-            // Fallback for any object that might not have an instance.
-            this.showExplosion(enemyGO.x, enemyGO.y);
-            enemyGO.destroy();
-            this.updateScore(10);
-        }
-    }
-
-    handleBulletEnemyCollision(bullet, enemyGO) {
-        // Any bullet-on-enemy collision will destroy the enemy.
-        const enemyInstance = enemyGO.getData('instance');
-        if (enemyInstance) {
-            enemyInstance.onHit();
-        } else {
-            // Fallback for safety, in case the instance isn't found.
-            this.destroyEnemy(enemyGO);
-        }
-
-        // Now, decide what to do with the bullet.
-        // If the bullet is NOT a bouncing type, destroy it.
-        if (!bullet.getData('bounces')) {
-            bullet.destroy();
-        }
-        // If it IS a bouncing bullet, we do nothing to it. The physics engine
-        // has already calculated the bounce, and the bullet will continue on its new path.
     }
 
     // --- Centralized enemy destruction logic ---
