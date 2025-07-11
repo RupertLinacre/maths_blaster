@@ -63,8 +63,10 @@ export default class GameScene extends Phaser.Scene {
         this.startGame();
 
         // --- Input Handling UI ---
-        const inputBox = this.add.rectangle(500, 480, 200, 40, config.COLORS.INPUT_BG).setStrokeStyle(2, config.COLORS.INPUT_BORDER);
-        this.inputDisplay = this.add.text(500, 480, '_', {
+        const inputX = this.sys.game.config.width / 2;
+        const inputY = this.sys.game.config.height - config.INPUT_BOX_Y_OFFSET_FROM_BOTTOM;
+        const inputBox = this.add.rectangle(inputX, inputY, 200, 40, config.COLORS.INPUT_BG).setStrokeStyle(2, config.COLORS.INPUT_BORDER);
+        this.inputDisplay = this.add.text(inputX, inputY, '_', {
             fontSize: '20px', color: config.COLORS.INPUT_TEXT, align: 'center', fixedWidth: 180
         }).setOrigin(0.5);
 
@@ -146,7 +148,7 @@ export default class GameScene extends Phaser.Scene {
         this.enemySpawnTimer.remove();
         if (this.sprayerSpawnTimer) this.sprayerSpawnTimer.remove();
         this.enemies.setVelocityY(0);
-        this.gameOverText = this.add.container(500, 300); // CHANGED
+        this.gameOverText = this.add.container(this.sys.game.config.width / 2, this.sys.game.config.height / 2);
         const bg = this.add.rectangle(0, 0, 500, 200, 0x000000, 0.7).setOrigin(0.5);
         const title = this.add.text(0, -50, 'Game Over', { fontSize: '48px', color: '#ff0000' }).setOrigin(0.5);
         const finalScore = this.add.text(0, 10, `Final Score: ${this.score}`, { fontSize: '24px', color: '#ffffff' }).setOrigin(0.5);
@@ -194,7 +196,9 @@ export default class GameScene extends Phaser.Scene {
     }
 
     createGun() {
-        this.gun = this.add.container(config.GUN_X, config.GUN_Y);
+        const gunX = this.sys.game.config.width / 2;
+        const gunY = this.sys.game.config.height - config.GUN_Y_OFFSET_FROM_BOTTOM;
+        this.gun = this.add.container(gunX, gunY);
         const gunBody = this.add.rectangle(0, 0, 80, 80, config.COLORS.GUN).setStrokeStyle(2, 0x000000);
         this.gunProblemText = this.add.text(0, 0, '', { fontSize: '20px', color: 'white', align: 'center' }).setOrigin(0.5);
         this.gun.add([gunBody, this.gunProblemText]);
@@ -504,7 +508,9 @@ export default class GameScene extends Phaser.Scene {
     }
 
     showLevelUpEffect() {
-        const text = this.add.text(500, 300, `LEVEL ${this.level}!`, {
+        const centerX = this.sys.game.config.width / 2;
+        const centerY = this.sys.game.config.height / 2;
+        const text = this.add.text(centerX, centerY, `LEVEL ${this.level}!`, {
             fontSize: '48px', color: '#FF5500', align: 'center'
         }).setOrigin(0.5);
         this.tweens.add({
@@ -517,7 +523,14 @@ export default class GameScene extends Phaser.Scene {
     }
 
     showIncorrectAnswerEffect() {
-        const rect = this.add.rectangle(500, 300, 1000, 600, 0xff0000, 0.3); // CHANGED
+        const centerX = this.sys.game.config.width / 2;
+        const centerY = this.sys.game.config.height / 2;
+        const rect = this.add.rectangle(
+            centerX,
+            centerY,
+            this.sys.game.config.width,
+            this.sys.game.config.height,
+            0xff0000, 0.3);
         this.tweens.add({
             targets: rect,
             alpha: 0,
