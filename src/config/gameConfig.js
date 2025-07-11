@@ -28,7 +28,7 @@ export default {
     GUN_Y_OFFSET_FROM_BOTTOM: 50,
     COLORS: {
         BACKGROUND: '#f0f8ff',
-        GRID: 0x444444, // Darker grid for better contrast
+        GRID: 0xe6e6fa, // Darker grid for better contrast
         SCORE_TEXT: '#333',
         GUN: 0x4169E1,
         INPUT_BG: 0x333333,
