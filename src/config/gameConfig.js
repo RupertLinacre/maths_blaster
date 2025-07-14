@@ -45,14 +45,14 @@ export default {
     enemyTypes: [
         {
             name: 'Standard',
-            spawnWeight: 0.8, // 80% chance
+            spawnWeight: 0.66666, // 80% chance
             color: 0x00ff00, // Green
             strategy: new DestroyEnemyStrategy(),
             problemType: 'enemy'
         },
         {
             name: 'Shooter',
-            spawnWeight: 0.2, // 20% chance
+            spawnWeight: 0.33333, // 20% chance
             color: 0xff0000, // Red
             strategy: new ShootAndDestroyEnemyStrategy(),
             problemType: 'gun'
