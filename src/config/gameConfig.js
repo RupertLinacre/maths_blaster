@@ -1,5 +1,5 @@
 // src/config/gameConfig.js
-import { DestroyEnemyStrategy, ShootAndDestroyEnemyStrategy, SprayAndDestroyEnemyStrategy } from '../strategies/EffectStrategy.js';
+import { SingleShotAndDestroyEnemyStrategy, ShootAndDestroyEnemyStrategy, SprayAndDestroyEnemyStrategy } from '../strategies/EffectStrategy.js';
 
 export function getAdjustedFontSize(textLength) {
     const BASE_SIZE = 20;
@@ -47,7 +47,7 @@ export default {
             name: 'Standard',
             spawnWeight: 0.8, // 80% chance
             color: 0x00ff00, // Green
-            strategy: new DestroyEnemyStrategy(),
+            strategy: new SingleShotAndDestroyEnemyStrategy(),
             problemType: 'enemy'
         },
         {

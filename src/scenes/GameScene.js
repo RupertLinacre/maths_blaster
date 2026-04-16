@@ -14,6 +14,7 @@ export default class GameScene extends Phaser.Scene {
         this.score = 0;
         this.level = 1;
         this.lives = 3;
+        this.answeredCount = 0;
         this.initialLives = 3; // Fixed, not settable from UI
         this.gameOver = false;
         this.enemySpeed = config.BASE_ENEMY_SPEED;
@@ -105,6 +106,7 @@ export default class GameScene extends Phaser.Scene {
         this.score = 0;
         this.level = 1;
         this.lives = 3; // Always 3 lives
+        this.answeredCount = 0;
         this.enemySpeed = config.BASE_ENEMY_SPEED;
         this.enemySpawnInterval = config.BASE_ENEMY_SPAWN_INTERVAL;
         this.enemies.clear(true, true);
@@ -114,6 +116,7 @@ export default class GameScene extends Phaser.Scene {
         this.updateScore(0);
         this.updateLivesDisplay();
         this.updateLevelDisplay();
+        this.updateAnsweredDisplay();
         // This is the new call
         this.setGunProblem(ProblemService.getHarderProblem());
         // Clear any existing timers before starting new ones
@@ -218,6 +221,10 @@ export default class GameScene extends Phaser.Scene {
         if (this.uiScene) this.uiScene.updateLevel(this.level);
     }
 
+    updateAnsweredDisplay() {
+        if (this.uiScene) this.uiScene.updateAnswered(this.answeredCount);
+    }
+
     spawnStandardEnemy() {
         if (this.gameOver) return;
         this.enemyFactory.createStandardEnemy();
@@ -267,6 +274,15 @@ export default class GameScene extends Phaser.Scene {
             }
             // --- END OF BLOCK ---
         });
+    }
+
+    shootRandomEnemyBullet(x, y) {
+        const bullet = this.add.circle(x, y, 5, config.COLORS.ENEMY_BULLET);
+        this.enemyBullets.add(bullet);
+        bullet.body.setCircle(5);
+
+        const angle = Phaser.Math.Between(0, 359);
+        this.physics.velocityFromAngle(angle, 150, bullet.body.velocity);
     }
 
     // Creates a 360-degree spray of 12 bouncing bullets from (x, y)
@@ -476,6 +492,8 @@ export default class GameScene extends Phaser.Scene {
         this.inputDisplay.setText('_');
         if (isNaN(answer)) return;
 
+        this.answeredCount += 1;
+        this.updateAnsweredDisplay();
         this.checkAnswer(answer);
     }
 

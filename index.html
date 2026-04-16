@@ -57,6 +57,31 @@
             width: 60px;
         }
 
+        .controls-container select,
+        .pause-button {
+            padding: 8px 12px;
+            border: 1px solid #4169E1;
+            border-radius: 4px;
+            font-size: 16px;
+            background-color: #333;
+            color: #eee;
+        }
+
+        .pause-button {
+            cursor: pointer;
+            min-width: 90px;
+        }
+
+        .pause-button:hover {
+            background-color: #3a3a3a;
+        }
+
+        .pause-button:focus-visible,
+        .controls-container select:focus-visible {
+            outline: 2px solid #7FFFD4;
+            outline-offset: 2px;
+        }
+
         #game-container {
             border-radius: 8px;
             overflow: hidden;
@@ -101,6 +126,8 @@
             </select>
         </div>
         <!-- END OF BLOCK -->
+
+        <button id="pause-button" class="pause-button" type="button" aria-pressed="false">Pause</button>
     </div>
 
     <div id="game-container"></div>

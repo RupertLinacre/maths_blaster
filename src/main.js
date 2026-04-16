@@ -33,11 +33,37 @@ const config = {
 // Create the Phaser Game Instance
 const game = new Phaser.Game(config);
 
+function isGameplayPaused() {
+    return game.scene.isPaused('GameScene');
+}
+
+function setPauseState(paused) {
+    game.registry.set('isPaused', paused);
+}
+
+function togglePause() {
+    const gameScene = game.scene.getScene('GameScene');
+    if (!gameScene || gameScene.gameOver) {
+        return false;
+    }
+
+    if (isGameplayPaused()) {
+        game.scene.resume('GameScene');
+        setPauseState(false);
+        return false;
+    }
+
+    game.scene.pause('GameScene');
+    setPauseState(true);
+    return true;
+}
+
 // --- 2. SET INITIAL STATE IN PHASER REGISTRY ---
 // The registry is a global state manager for the game.
 // We set the initial values here so scenes can read them on creation.
 game.registry.set('difficulty', initialDifficulty);
 game.registry.set('problemType', initialProblemType);
+setPauseState(false);
 
 
 // --- 3. CONNECT HTML UI TO PHASER ---
@@ -55,6 +81,36 @@ window.addEventListener('load', () => {
     // Get references to UI controls
     const difficultySelector = document.getElementById('difficulty-selector');
     const problemTypeSelector = document.getElementById('problem-type-selector');
+    const pauseButton = document.getElementById('pause-button');
+
+    const syncPauseButton = () => {
+        const paused = isGameplayPaused();
+        pauseButton.textContent = paused ? 'Resume' : 'Pause';
+        pauseButton.setAttribute('aria-pressed', String(paused));
+    };
+
+    pauseButton.addEventListener('click', () => {
+        const paused = togglePause();
+        syncPauseButton();
+
+        if (!paused) {
+            canvas.focus();
+        }
+    });
+
+    window.addEventListener('keydown', (event) => {
+        if (event.key !== 'Escape' || event.repeat) {
+            return;
+        }
+
+        event.preventDefault();
+        const paused = togglePause();
+        syncPauseButton();
+
+        if (!paused) {
+            canvas.focus();
+        }
+    });
 
     // Populate and set the initial value for the difficulty selector
     allYearLevels.forEach(level => {
@@ -80,6 +136,11 @@ window.addEventListener('load', () => {
         localStorage.setItem('mathsBlasterDifficulty', value);
         game.registry.set('difficulty', value); // Update registry
         game.events.emit('difficulty-changed', { difficulty: value });
+        if (isGameplayPaused()) {
+            game.scene.resume('GameScene');
+            setPauseState(false);
+            syncPauseButton();
+        }
     });
 
     problemTypeSelector.addEventListener('change', (event) => {
@@ -87,5 +148,12 @@ window.addEventListener('load', () => {
         localStorage.setItem('mathsBlasterProblemType', value);
         game.registry.set('problemType', value); // Update registry
         game.events.emit('problem-type-changed', { type: value });
+        if (isGameplayPaused()) {
+            game.scene.resume('GameScene');
+            setPauseState(false);
+            syncPauseButton();
+        }
     });
+
+    syncPauseButton();
 });
