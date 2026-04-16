@@ -25,7 +25,6 @@ export default {
     SPRAYER_LANES: [120, 400],
     INCORRECT_ANSWER_SPEED_PENALTY: 5,
     SHOT_SPEED: 400,
-    GUN_X: 500, // CHANGED
     GUN_Y: 550,
     COLORS: {
         BACKGROUND: '#f0f8ff',

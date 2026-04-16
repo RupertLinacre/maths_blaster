@@ -13,10 +13,20 @@ const allProblemTypes = ['all', ...getProblemTypes()];
 const savedProblemType = localStorage.getItem('mathsBlasterProblemType');
 const initialProblemType = savedProblemType && allProblemTypes.includes(savedProblemType) ? savedProblemType : 'all';
 
+const GAME_WIDTH_COMPACT = 1000;
+const GAME_WIDTH_WIDE = 1500;
+const GAME_CONTAINER_HORIZONTAL_BORDER = 6;
+const BODY_HORIZONTAL_PADDING = 40;
+
+function getGameWidth() {
+    const availableWidth = window.innerWidth - BODY_HORIZONTAL_PADDING - GAME_CONTAINER_HORIZONTAL_BORDER;
+    return availableWidth >= GAME_WIDTH_WIDE ? GAME_WIDTH_WIDE : GAME_WIDTH_COMPACT;
+}
+
 // Phaser Game Configuration
 const config = {
     type: Phaser.AUTO,
-    width: 1000,
+    width: getGameWidth(),
     height: 600,
     parent: 'game-container',
     backgroundColor: '#f0f8ff',
