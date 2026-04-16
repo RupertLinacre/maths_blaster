@@ -59,8 +59,9 @@ export default class GameScene extends Phaser.Scene {
         this.shots = this.physics.add.group();
         this.enemyBullets = this.physics.add.group();
         this.createGun();
-        this.physics.add.overlap(this.shots, this.enemies, this.shotHitEnemy, null, this);
-        this.physics.add.collider(this.enemyBullets, this.enemies, this.handleBulletEnemyCollision, null, this);
+        this.physics.add.overlap(this.shots, this.enemies, this.handleProjectileHitEnemy, null, this);
+        this.physics.add.collider(this.enemyBullets, this.enemies, this.handleProjectileHitEnemy, null, this);
+        this.physics.add.overlap(this.gun, this.enemyBullets, this.bulletHitGun, null, this);
         this.startGame();
 
         // --- Input Handling UI ---
@@ -149,7 +150,7 @@ export default class GameScene extends Phaser.Scene {
 
         // Timer for the special Sprayer enemy (Purple)
         this.sprayerSpawnTimer = this.time.addEvent({
-            delay: config.SPRAYER_SPAWN_INTERVAL / 2,
+            delay: config.SPRAYER_SPAWN_INTERVAL,
             callback: this.spawnSprayerEnemy,
             callbackScope: this,
             loop: true
@@ -174,6 +175,28 @@ export default class GameScene extends Phaser.Scene {
 
         // Ensure game over text appears on top of everything
         this.gameOverText.setDepth(2000);
+    }
+
+    handleProjectileHitEnemy(projectile, enemyGO) {
+        const enemyInstance = enemyGO.getData('instance');
+        if (enemyInstance && enemyInstance.gameObject.active) {
+            enemyInstance.onHit();
+        } else if (enemyGO.active) {
+            this.destroyEnemy(enemyGO);
+        }
+
+        // Player shots and non-bouncing enemy bullets are spent on impact.
+        // Bouncing enemy bullets survive so they can continue the chain.
+        if (!projectile.getData('bounces')) {
+            projectile.destroy();
+        }
+    }
+
+    bulletHitGun(gun, bullet) {
+        if (!bullet.active) return;
+
+        bullet.destroy();
+        new FireGunStrategy().execute(this, gun);
     }
 
 
@@ -296,6 +319,7 @@ export default class GameScene extends Phaser.Scene {
         const bullet = this.add.circle(x, y, 5, config.COLORS.ENEMY_BULLET);
         this.enemyBullets.add(bullet);
         bullet.body.setCircle(5);
+        bullet.setData('bounces', false);
 
         const angle = Phaser.Math.Between(0, 359);
         this.physics.velocityFromAngle(angle, 150, bullet.body.velocity);
@@ -358,40 +382,6 @@ export default class GameScene extends Phaser.Scene {
             }
         });
         this.showIncorrectAnswerEffect();
-    }
-
-    shotHitEnemy(shot, enemyGO) {
-        shot.destroy(); // The shot is always destroyed.
-
-        const enemyInstance = enemyGO.getData('instance');
-        if (enemyInstance) {
-            // Delegate the handling of being hit to the enemy itself.
-            enemyInstance.onHit();
-        } else {
-            // Fallback for any object that might not have an instance.
-            this.showExplosion(enemyGO.x, enemyGO.y);
-            enemyGO.destroy();
-            this.updateScore(10);
-        }
-    }
-
-    handleBulletEnemyCollision(bullet, enemyGO) {
-        // Any bullet-on-enemy collision will destroy the enemy.
-        const enemyInstance = enemyGO.getData('instance');
-        if (enemyInstance) {
-            enemyInstance.onHit();
-        } else {
-            // Fallback for safety, in case the instance isn't found.
-            this.destroyEnemy(enemyGO);
-        }
-
-        // Now, decide what to do with the bullet.
-        // If the bullet is NOT a bouncing type, destroy it.
-        if (!bullet.getData('bounces')) {
-            bullet.destroy();
-        }
-        // If it IS a bouncing bullet, we do nothing to it. The physics engine
-        // has already calculated the bounce, and the bullet will continue on its new path.
     }
 
     // --- Centralized enemy destruction logic ---

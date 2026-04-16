@@ -8,7 +8,6 @@ import ProblemService from '../services/ProblemService.js';
 export default class EnemyFactory {
     constructor(scene) {
         this.scene = scene;
-        this.nextSprayerLaneIndex = 0;
     }
 
     /**
@@ -53,10 +52,8 @@ export default class EnemyFactory {
 
         // 2. Create the enemy instance and set its properties
         const x = -config.ENEMY_WIDTH / 2; // Start off-screen left
-        const y = config.SPRAYER_LANES[this.nextSprayerLaneIndex];
+        const y = 400; // Near the top
         const enemy = this.buildEnemy(x, y, sprayerType, problemData);
-
-        this.nextSprayerLaneIndex = (this.nextSprayerLaneIndex + 1) % config.SPRAYER_LANES.length;
 
         enemy.gameObject.body.setVelocity(50, 0); // Move right
         enemy.gameObject.setData('isThreat', false); // Sprayer is not a threat

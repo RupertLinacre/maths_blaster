@@ -41,8 +41,8 @@ export default class Enemy {
 
     // --- ADD THIS NEW METHOD ---
     onHit() {
-        // Delegate destruction and subsequent logic to the scene.
-        this.scene.destroyEnemy(this.gameObject);
+        // Projectile hits trigger the same effect as solving the enemy.
+        this.executeEffect();
     }
     // --- END OF NEW METHOD ---
 }

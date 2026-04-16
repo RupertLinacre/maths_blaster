@@ -14,7 +14,7 @@ const savedProblemType = localStorage.getItem('mathsBlasterProblemType');
 const initialProblemType = savedProblemType && allProblemTypes.includes(savedProblemType) ? savedProblemType : 'all';
 
 const GAME_WIDTH_COMPACT = 1000;
-const GAME_WIDTH_WIDE = 1500;
+const GAME_WIDTH_WIDE = 1250;
 const GAME_CONTAINER_HORIZONTAL_BORDER = 6;
 const BODY_HORIZONTAL_PADDING = 40;
 
