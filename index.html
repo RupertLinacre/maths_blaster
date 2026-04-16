@@ -57,6 +57,31 @@
             width: 60px;
         }
 
+        .controls-container select,
+        .pause-button {
+            padding: 8px 12px;
+            border: 1px solid #4169E1;
+            border-radius: 4px;
+            font-size: 16px;
+            background-color: #333;
+            color: #eee;
+        }
+
+        .pause-button {
+            cursor: pointer;
+            min-width: 90px;
+        }
+
+        .pause-button:hover {
+            background-color: #3a3a3a;
+        }
+
+        .pause-button:focus-visible,
+        .controls-container select:focus-visible {
+            outline: 2px solid #7FFFD4;
+            outline-offset: 2px;
+        }
+
         #game-container {
             border-radius: 8px;
             overflow: hidden;
@@ -72,7 +97,7 @@
             display: block;
         }
     </style>
-  <script type="module" crossorigin src="/maths_blaster/assets/index-BKs7RRj_.js"></script>
+  <script type="module" crossorigin src="/maths_blaster/assets/index-C_3-Jd0X.js"></script>
 </head>
 
 <body>
@@ -103,19 +128,7 @@
         </div>
         <!-- END OF BLOCK -->
 
-        <!-- ADD THIS BLOCK -->
-        <div>
-            <label for="game-width-input">Width:</label>
-            <input type="number" id="game-width-input" min="600" max="2000" step="10">
-        </div>
-        <!-- END OF BLOCK -->
-
-        <!-- ADD THIS BLOCK -->
-        <div>
-            <label for="game-height-input">Height:</label>
-            <input type="number" id="game-height-input" min="400" max="1500" step="10">
-        </div>
-        <!-- END OF BLOCK -->
+        <button id="pause-button" class="pause-button" type="button" aria-pressed="false">Pause</button>
     </div>
 
     <div id="game-container"></div>
