@@ -133,7 +133,7 @@ export default class GameScene extends Phaser.Scene {
 
         // Timer for the special Sprayer enemy (Purple)
         this.sprayerSpawnTimer = this.time.addEvent({
-            delay: config.SPRAYER_SPAWN_INTERVAL,
+            delay: config.SPRAYER_SPAWN_INTERVAL / 2,
             callback: this.spawnSprayerEnemy,
             callbackScope: this,
             loop: true
